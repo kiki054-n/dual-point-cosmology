@@ -3,86 +3,220 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>無限循環の宇宙創成論 | Dual-Point Cosmology</title>
+  <title>直線の双極と円環宇宙論 | Cosmic Creation</title>
   <style>
     body {
       margin: 0;
-      background-color: #0d0f12;
+      padding: 2rem 1rem;
+      background-color: #000;
       color: #e0e6ed;
-      font-family: sans-serif;
-      line-height: 1.6;
+      font-family: serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-y: auto; /* スクロールを有効化 */
+      box-sizing: border-box;
     }
-    header {
-      padding: 2rem;
+    #story-container {
       text-align: center;
-      border-bottom: 1px solid #1a2332;
+      max-width: 700px;
+      width: 100%;
+      margin-bottom: 2rem;
+      line-height: 1.8;
+      letter-spacing: 0.05em;
     }
-    main {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
+    .concept-title {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #58a6ff;
+      margin-bottom: 0.5rem;
     }
-    .concept-card {
-      background: #161b22;
+    .concept-subtitle {
+      font-size: 1rem;
+      color: #8b949e;
+      margin-bottom: 1rem;
+    }
+    .concept-body {
+      text-align: left;
+      font-size: 0.95rem;
+      background: rgba(22, 27, 34, 0.8);
       border: 1px solid #30363d;
       border-radius: 8px;
       padding: 1.5rem;
-      margin-bottom: 1.5rem;
+      font-family: sans-serif;
+    }
+    .concept-body h3 {
+      margin: 1rem 0 0.3rem 0;
+      font-size: 1rem;
+      color: #f0883e;
+    }
+    .concept-body h3:first-child {
+      margin-top: 0;
     }
     canvas {
-      display: block;
-      margin: 2rem auto;
-      background: #000;
-      border-radius: 50%;
+      cursor: pointer;
+      border-radius: 8px;
+      max-width: 100%;
+      height: auto;
+    }
+    .hint {
+      margin-top: 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 0.85rem;
+      color: #8b949e;
+      font-family: sans-serif;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>直線の双極と円環宇宙論</h1>
-    <p>幾何学の極限構造から紐解くビッグバンとビッグクランチの同一性</p>
-  </header>
-  <main>
-    <section class="concept-card">
-      <h2>1. 幾何学的基礎：直線の双極と閉じた空間</h2>
-      <p>球面幾何学において、一直線上に進み続ける運動は無限遠で反対側の極（双極）に達し、最終的に始点へと戻る大きな「円」を描きます。局所的な「直線」の概念は、大域的には「円周」として完成します。</p>
-    </section>
 
-    <section class="concept-card">
-      <h2>2. 宇宙創成への適用：時間とインフレーション</h2>
-      <p>時間の矢を1次元の「直線」として捉えた場合、始点である**ビッグバン**と終点である**ビッグクランチ**（または無限の収縮点）は同一の極として結ばれます。宇宙の誕生と終焉は独立した2点ではなく、1つの極限状態の表と裏です。</p>
-    </section>
+  <div id="story-container">
+    <div id="step-0-text">
+      何もない。<br>
+      境界もない。
+    </div>
+  </div>
 
-    <canvas id="cosmoCanvas" width="300" height="300"></canvas>
-  </main>
+  <canvas id="cosmoCanvas" width="500" height="400"></canvas>
+  <div class="hint">画面（またはキャンバス）をクリックして次のステップへ進む</div>
 
   <script>
     const canvas = document.getElementById('cosmoCanvas');
     const ctx = canvas.getContext('2d');
+    const storyContainer = document.getElementById('story-container');
+
+    let step = 0;
+    let opacity = 0;
     let angle = 0;
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // 円周（宇宙空間のループ）を描画
-      ctx.beginPath();
-      ctx.arc(150, 150, 100, 0, Math.PI * 2);
-      ctx.strokeStyle = '#388bfd';
-      ctx.lineWidth = 2;
-      ctx.stroke();
 
-      // 直線的な移動（時間経過）が円周上を回るアニメーション
-      const x = 150 + 100 * Math.cos(angle);
-      const y = 150 + 100 * Math.sin(angle);
+      const centerX = canvas.width / 2;
+      const circleCenterY = 160;
+      const radius = 100;
+      const lineY = 320;
 
-      ctx.beginPath();
-      ctx.arc(x, y, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#58a6ff';
-      ctx.fill();
+      if (step === 0) {
+        // 段階 0: 完全なる無
+      } 
+      else if (step === 1) {
+        // 段階 1: 無と有の双極と境界
+        if (opacity < 1) opacity += 0.02;
 
-      angle += 0.02;
+        ctx.globalAlpha = opacity;
+        
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, centerX, canvas.height);
+        ctx.fillStyle = '#11161d';
+        ctx.fillRect(centerX, 0, centerX, canvas.height);
+
+        // 境界線
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, canvas.height);
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 境界上の双極
+        ctx.beginPath();
+        ctx.arc(centerX - 80, circleCenterY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(centerX + 80, circleCenterY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#f0883e';
+        ctx.fill();
+
+        ctx.globalAlpha = 1.0;
+      }
+      else if (step === 2) {
+        // 段階 2: 円環と独立した直線の双極運動
+
+        // 円軌道
+        ctx.beginPath();
+        ctx.arc(centerX, circleCenterY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#1f6beb';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 円周上の点
+        const circleX = centerX + radius * Math.cos(angle);
+        const circleY = circleCenterY + radius * Math.sin(angle);
+
+        ctx.beginPath();
+        ctx.arc(circleX, circleY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#58a6ff';
+        ctx.fill();
+
+        // 独立した直線軸
+        ctx.beginPath();
+        ctx.moveTo(centerX - radius, lineY);
+        ctx.lineTo(centerX + radius, lineY);
+        ctx.strokeStyle = '#30363d';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 直線の双極（両端点）
+        ctx.fillStyle = '#f85149';
+        ctx.beginPath();
+        ctx.arc(centerX - radius, lineY, 5, 0, Math.PI * 2);
+        ctx.arc(centerX + radius, lineY, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 直線上を往復する点
+        const lineX = centerX + radius * Math.cos(angle);
+
+        ctx.beginPath();
+        ctx.arc(lineX, lineY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#f0883e';
+        ctx.fill();
+
+        // 位相を示すガイド点線
+        ctx.beginPath();
+        ctx.setLineDash([2, 4]);
+        ctx.moveTo(lineX, circleCenterY + radius);
+        ctx.lineTo(lineX, lineY);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        angle += 0.02;
+      }
+
       requestAnimationFrame(draw);
     }
+
+    // クリック（またはタップ）でステップ進行
+    window.addEventListener('click', () => {
+      if (step === 0) {
+        step = 1;
+        storyContainer.innerHTML = `
+          <div style="font-size: 1.1rem; line-height: 2;">
+            始まりは、何もない。<br>
+            しかし関係性は双極である。<br>
+            双極の場も、それがある・無しの双極で、境界で別れる。<br>
+            最初は境界もない。
+          </div>
+        `;
+      } else if (step === 1) {
+        step = 2;
+        storyContainer.innerHTML = `
+          <div class="concept-title">直線の双極と円環宇宙論</div>
+          <div class="concept-subtitle">幾何学の極限構造から紐解くビッグバンとビッグクランチの同一性</div>
+          <div class="concept-body">
+            <h3>1. 幾何学的基礎：直線の双極と閉じた空間</h3>
+            <p>球面幾何学において、一直線上に進み続ける運動は無限遠で反対側の極（双極）に達し、最終的に始点へと戻る大きな「円」を描きます。局所的な「直線」の概念は、大域的には「円周」として完成します。</p>
+            <h3>2. 宇宙創成への適用：時間とインフレーション</h3>
+            <p>時間の矢を1次元の「直線」として捉えた場合、始点である<b>ビッグバン</b>と終点である<b>ビッグクランチ</b>（または無限の収縮点）は同一の極として結ばれます。宇宙の誕生と終焉は独立した2点ではなく、1つの極限状態の表と裏です。</p>
+          </div>
+        `;
+      }
+    });
+
     draw();
   </script>
 </body>
