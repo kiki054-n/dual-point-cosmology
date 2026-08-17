@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>直線の双極と円環宇宙論 | Cosmic Creation</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 1.5rem 1rem;
+      background-color: #000;
+      color: #e0e6ed;
+      font-family: serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    
+    #nav-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      background: rgba(22, 27, 34, 0.9);
+      padding: 0.6rem 1.2rem;
+      border-radius: 30px;
+      border: 1px solid #30363d;
+      font-family: sans-serif;
+      z-index: 10;
+    }
+    .nav-btn {
+      background: #21262d;
+      color: #58a6ff;
+      border: 1px solid #30363d;
+      padding: 0.4rem 0.9rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: #30363d;
+      color: #79c0ff;
+    }
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    #step-select {
+      background: #0d1117;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    #story-container {
+      text-align: center;
+      max-width: 700px;
+      width: 100%;
+      margin-bottom: 1.5rem;
+      line-height: 1.8;
+      letter-spacing: 0.05em;
+    }
+    .concept-title {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #58a6ff;
+      margin-bottom: 0.5rem;
+    }
+    .concept-body {
+      text-align: left;
+      font-size: 0.95rem;
+      background: rgba(22, 27, 34, 0.8);
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.2rem;
+      font-family: sans-serif;
+    }
+    .orbital-image-box {
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .orbital-image-box img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+    }
+    .orbital-caption {
+      margin-top: 0.4rem;
+      font-size: 0.8rem;
+      color: #8b949e;
+      font-family: sans-serif;
+    }
+    canvas {
+      border-radius: 8px;
+      max-width: 100%;
+      height: auto;
+    }
+    .controls-container {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      background: rgba(22, 27, 34, 0.8);
+      padding: 0.6rem 1.2rem;
+      border-radius: 20px;
+      border: 1px solid #30363d;
+      font-family: sans-serif;
+      font-size: 0.85rem;
+      color: #c9d1d9;
+    }
+    .controls-container input[type=range] {
+      cursor: pointer;
+      accent-color: #58a6ff;
+    }
+    .hint {
+      margin-top: 0.8rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.8rem;
+      color: #8b949e;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="nav-controls">
+    <button class="nav-btn" id="prevBtn">← 戻る</button>
+    <select id="step-select"></select>
+    <button class="nav-btn" id="nextBtn">次へ →</button>
+  </div>
+
+  <div id="story-container">
+    <div id="step-0-text">
+      何もない。<br>
+      境界もない。
+    </div>
+  </div>
+
+  <canvas id="cosmoCanvas" width="500" height="400"></canvas>
+  
+  <div class="controls-container" id="controls" style="display: none;">
+    <label for="speedSlider">運動速度:</label>
+    <input type="range" id="speedSlider" min="0" max="3" step="0.1" value="1.5">
+    <span id="speedValue">1.5x</span>
+
+    <div id="z-control" style="display: none; margin-left: 1rem;">
+      <label for="zRotSlider">Z軸回転:</label>
+      <input type="range" id="zRotSlider" min="0" max="360" step="1" value="0">
+      <span id="zRotValue">0°</span>
+    </div>
+  </div>
+
+  <div class="hint">「← 戻る / 次へ →」ボタン、ドロップダウン、またはキーボード（← / →）で操作</div>
+
+  <script>
+    const canvas = document.getElementById('cosmoCanvas');
+    const ctx = canvas.getContext('2d');
+    const storyContainer = document.getElementById('story-container');
+    const controls = document.getElementById('controls');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const zControl = document.getElementById('z-control');
+    const zRotSlider = document.getElementById('zRotSlider');
+    const zRotValue = document.getElementById('zRotValue');
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const stepSelect = document.getElementById('step-select');
+
+    let step = 0;
+    const maxStep = 31;
+    let speedFactor = 1.5;
+    let zRotationAngle = 0;
+
+    const stepTitles = [
+      "Step 0: 完全なる無",
+      "Step 1: 双極の場の分断",
+      "Step 2: 直線の双極と円環宇宙論",
+      "Step 3: 宇宙の始まり（双極OO）",
+      "Step 4: 線分の確立",
+      "Step 5: 直交極（＋O2, ＋O3）",
+      "Step 6: 負の直交双極",
+      "Step 7: 直線「ー」の伸張",
+      "Step 8: 軸拘束と O1 の引き合い",
+      "Step 9: O2 の押され引かれる円運動",
+      "Step 10: O3 の周回連動",
+      "Step 11: O1 の ーー 上単振動",
+      "Step 12: －O2 回転中心の決定",
+      "Step 13: ーー 自体の中心回転",
+      "Step 14: 3次元自由回転",
+      "Step 15: 軌道塗りつぶし（双極球体）",
+      "Step 16: 第一世代の誕生（XYZ軸/Z回転付き）",
+      "Step 17: 第一世代の内部構造",
+      "Step 18: 6本線と指先結合",
+      "Step 19: 接点0（実体なし）",
+      "Step 20: 接点消滅と－OOπO / ＋OOπO",
+      "Step 21: 光速の壁の破壊とエネルギーなきOOπO",
+      "Step 22: 6つのOOπOと新たな接点の創成",
+      "Step 23: 光速励起と18のOOπO（第3世代）",
+      "Step 24: 3x3x3の27正方形グリッド壁による拘束",
+      "Step 25: 第4世代（4x4x4マスの中に54個）",
+      "Step 26: 第5世代（1マス1辺＝OOπO直径）",
+      "Step 27: 動（生）と止（死）の力学平衡",
+      "Step 28: 225要素の粒子創成 (3x3x5x5調和)",
+      "Step 29: 37の質量変換と225要素空間の完結",
+      "Step 30: 第6世代（6x6x6 216マス/486個/質量1〜2）",
+      "Step 31: 第7世代（原子・素粒子の誕生 / 軌道モデル添付）"
+    ];
+
+    stepTitles.forEach((title, index) => {
+      const opt = document.createElement('option');
+      opt.value = index;
+      opt.textContent = title;
+      stepSelect.appendChild(opt);
+    });
+
+    speedSlider.addEventListener('input', (e) => {
+      speedFactor = parseFloat(e.target.value);
+      speedValue.textContent = speedFactor.toFixed(1) + 'x';
+    });
+
+    zRotSlider.addEventListener('input', (e) => {
+      const deg = parseInt(e.target.value, 10);
+      zRotationAngle = (deg * Math.PI) / 180;
+      zRotValue.textContent = deg + '°';
+    });
+
+    let shmPhase = 0;
+    let rotAngleO2 = 0;
+    let rotAngleO3 = 0;
+    let axisRotAngle = 0;
+    let tiltAngle1 = 0;
+    let tiltAngle2 = 0;
+    let bipyramidRot = 0;
+    let breakEffectPhase = 0;
+    let animId = null;
+
+    function changeStep(newStep) {
+      if (newStep < 0 || newStep > maxStep) return;
+      step = newStep;
+      stepSelect.value = step;
+      prevBtn.disabled = (step === 0);
+      nextBtn.disabled = (step === maxStep);
+
+      updateText();
+      if (animId) cancelAnimationFrame(animId);
+      draw();
+    }
+
+    prevBtn.addEventListener('click', () => changeStep(step - 1));
+    nextBtn.addEventListener('click', () => changeStep(step + 1));
+    stepSelect.addEventListener('change', (e) => changeStep(parseInt(e.target.value, 10)));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') changeStep(step - 1);
+      if (e.key === 'ArrowRight') changeStep(step + 1);
+    });
+
+    function drawFirstGenSphere(cX, cY, r, isRight) {
+      const grad = ctx.createRadialGradient(cX, cY, 2, cX, cY, r);
+      if (isRight) {
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        grad.addColorStop(0.4, 'rgba(88, 166, 255, 0.6)');
+        grad.addColorStop(0.8, 'rgba(188, 140, 255, 0.3)');
+        grad.addColorStop(1, 'rgba(88, 166, 255, 0)');
+      } else {
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        grad.addColorStop(0.4, 'rgba(240, 136, 62, 0.6)');
+        grad.addColorStop(0.8, 'rgba(244, 112, 103, 0.3)');
+        grad.addColorStop(1, 'rgba(240, 136, 62, 0)');
+      }
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cX, cY, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cX, cY, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawGrid(gridCount, cubeSize) {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const halfSize = cubeSize / 2;
+      const stepS = cubeSize / gridCount;
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+
+      for (let i = 0; i <= gridCount; i++) {
+        ctx.beginPath();
+        ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize);
+        ctx.lineTo(centerX - halfSize + i * stepS, centerY + halfSize);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(centerX - halfSize, centerY - halfSize + i * stepS);
+        ctx.lineTo(centerX + halfSize, centerY - halfSize + i * stepS);
+        ctx.stroke();
+      }
+    }
+
+    function draw() {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      if (step === 15) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (step >= 8 && step < 16) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      if (step === 0) {
+        // 完全なる無
+      } 
+      else if (step === 1) {
+        ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, centerX, canvas.height);
+        ctx.fillStyle = '#11161d'; ctx.fillRect(centerX, 0, centerX, canvas.height);
+        ctx.beginPath(); ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height); ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.arc(centerX - 80, 160, 4, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+        ctx.beginPath(); ctx.arc(centerX + 80, 160, 4, 0, Math.PI * 2); ctx.fillStyle = '#f0883e'; ctx.fill();
+      }
+      else if (step === 2) {
+        const circleCenterY = 160; const radius = 100; const lineY = 320;
+        ctx.beginPath(); ctx.arc(centerX, circleCenterY, radius, 0, Math.PI * 2); ctx.strokeStyle = '#1f6beb'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(centerX + radius, circleCenterY, 6, 0, Math.PI * 2); ctx.fillStyle = '#58a6ff'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(centerX - radius, lineY); ctx.lineTo(centerX + radius, lineY); ctx.strokeStyle = '#30363d'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#f85149'; ctx.beginPath(); ctx.arc(centerX - radius, lineY, 5, 0, Math.PI * 2); ctx.arc(centerX + radius, lineY, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(centerX + radius, lineY, 6, 0, Math.PI * 2); ctx.fillStyle = '#f0883e'; ctx.fill();
+      }
+      else if (step === 3) {
+        ctx.beginPath(); ctx.moveTo(centerX, 50); ctx.lineTo(centerX, 350); ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(centerX, 150); ctx.lineTo(centerX - 120, 150); ctx.strokeStyle = '#f0883e'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - 60, 150, 6, 0, Math.PI * 2); ctx.arc(centerX - 120, 150, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(centerX, 250); ctx.lineTo(centerX + 120, 250); ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + 60, 250, 6, 0, Math.PI * 2); ctx.arc(centerX + 120, 250, 6, 0, Math.PI * 2); ctx.fill();
+      }
+      else if (step === 4) {
+        const dist = 120;
+        ctx.beginPath(); ctx.moveTo(centerX - dist, centerY); ctx.lineTo(centerX + dist, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#8b949e'; ctx.font = '14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 20);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - dist, centerY, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O1', centerX - dist - 15, centerY - 15);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + dist, centerY, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O1', centerX + dist - 10, centerY - 15);
+      }
+      else if (step === 5) {
+        const dist = 110; const diagDist = dist * 0.75;
+        ctx.beginPath(); ctx.moveTo(centerX - dist, centerY); ctx.lineTo(centerX + dist, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX, centerY - dist); ctx.lineTo(centerX, centerY + dist); ctx.strokeStyle = '#38d430'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX - diagDist, centerY + diagDist); ctx.lineTo(centerX + diagDist, centerY - diagDist); ctx.strokeStyle = '#bc8cff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#8b949e'; ctx.font = '12px sans-serif'; ctx.fillText('0', centerX + 8, centerY + 15);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - dist, centerY, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O1', centerX - dist - 25, centerY + 4);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + dist, centerY, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O1', centerX + dist + 10, centerY + 4);
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(centerX, centerY - dist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O2', centerX - 12, centerY - dist - 12);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(centerX + diagDist, centerY - diagDist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O3', centerX + diagDist + 10, centerY - diagDist - 6);
+      }
+      else if (step === 6) {
+        const dist = 110; const diagDist = dist * 0.75;
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 5);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + dist, centerY, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O1', centerX + dist + 10, centerY + 5);
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(centerX, centerY - dist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O2', centerX - 12, centerY - dist - 10);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(centerX + diagDist, centerY - diagDist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O3', centerX + diagDist + 10, centerY - diagDist - 5);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - dist, centerY, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O1', centerX - dist - 35, centerY + 5);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(centerX, centerY + dist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O2', centerX - 12, centerY + dist + 20);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(centerX - diagDist, centerY + diagDist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O3', centerX - diagDist - 35, centerY + diagDist + 10);
+      }
+      else if (step === 7) {
+        const baseDist = 100; const extLength = 190;
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const p1 = { x: centerX + baseDist, y: centerY };
+        const p2 = { x: centerX, y: centerY - 90 };
+        const p3 = { x: centerX + 65, y: centerY - 65 };
+        const m1 = { x: centerX - baseDist, y: centerY };
+        const m2 = { x: centerX, y: centerY + 90 };
+        const m3 = { x: centerX - 65, y: centerY + 65 };
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1.x, p1.y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1 (親指)', p1.x - 15, p1.y - 12);
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2.x, p2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2 (人指)', p2.x - 20, p2.y - 10);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3.x, p3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3 (中指)', p3.x + 10, p3.y - 5);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1.x, m1.y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1 (親指)', m1.x - 25, m1.y - 12);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2.x, m2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2 (人指)', m2.x - 20, m2.y + 20);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3.x, m3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3 (中指)', m3.x - 75, m3.y + 15);
+      }
+      else if (step === 8) {
+        const baseDist = 120; const extLength = 190; const gap = 8;
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const p2 = { x: centerX, y: centerY - 90 }; const p3 = { x: centerX + 65, y: centerY - 65 };
+        const m2 = { x: centerX, y: centerY + 90 }; const m3 = { x: centerX - 65, y: centerY + 65 };
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2.x, p2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2.x - 12, p2.y - 10);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3.x, p3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3.x + 10, p3.y - 5);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2.x, m2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2.x - 12, m2.y + 20);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3.x, m3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3.x - 75, m3.y + 15);
+
+        const attraction = (Math.sin(shmPhase) + 1) * 0.5;
+        const currentDist = baseDist - (baseDist - 25) * attraction;
+        const p1X = centerX + currentDist; const m1X = centerX - currentDist;
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(p1X, centerY); ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 10, centerY - 12);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 12);
+
+        shmPhase += 0.03 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 9) {
+        const baseDist = 120; const extLength = 190; const gap = 8;
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const p1X = centerX + baseDist * 0.8;
+        const m1X = centerX - baseDist * 0.8;
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1 (中心)', p1X - 15, centerY + 20);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1 (中心)', m1X - 25, centerY + 20);
+
+        const p3 = { x: centerX + 65, y: centerY - 65 }; const m3 = { x: centerX - 65, y: centerY + 65 };
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3.x, p3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3.x + 10, p3.y - 5);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3.x, m3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3.x - 75, m3.y + 15);
+
+        const o2Radius = 60;
+
+        ctx.beginPath(); ctx.arc(p1X, centerY, o2Radius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(m1X, centerY, o2Radius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const o2X = p1X + o2Radius * Math.cos(rotAngleO2);
+        const o2Y = centerY - o2Radius * Math.sin(rotAngleO2);
+        const m2X = m1X - o2Radius * Math.cos(rotAngleO2);
+        const m2Y = centerY + o2Radius * Math.sin(rotAngleO2);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(o2X, o2Y); ctx.strokeStyle = 'rgba(240, 136, 62, 0.4)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1X, centerY); ctx.lineTo(o2X, o2Y); ctx.strokeStyle = 'rgba(88, 166, 255, 0.4)'; ctx.lineWidth = 1; ctx.stroke();
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(o2X, o2Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', o2X + 10, o2Y + 4);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 30, m2Y + 4);
+
+        rotAngleO2 += 0.03 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 10) {
+        const baseDist = 120; const extLength = 190; const gap = 8;
+
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const p1X = centerX + baseDist * 0.8;
+        const m1X = centerX - baseDist * 0.8;
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1 (中心)', p1X - 15, centerY + 20);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1 (中心)', m1X - 25, centerY + 20);
+
+        const o2Radius = 55;
+        const o3Radius = 85;
+
+        ctx.beginPath(); ctx.arc(p1X, centerY, o2Radius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(p1X, centerY, o3Radius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+        ctx.beginPath(); ctx.arc(m1X, centerY, o2Radius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.arc(m1X, centerY, o3Radius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const o2X = p1X + o2Radius * Math.cos(rotAngleO2);
+        const o2Y = centerY - o2Radius * Math.sin(rotAngleO2);
+        const m2X = m1X - o2Radius * Math.cos(rotAngleO2);
+        const m2Y = centerY + o2Radius * Math.sin(rotAngleO2);
+
+        const cos3 = Math.cos(rotAngleO3);
+        const sin3 = Math.sin(rotAngleO3);
+        const rx = o3Radius * cos3;
+        const ry = o3Radius * 0.45 * sin3;
+        const cos45 = Math.cos(-Math.PI / 4);
+        const sin45 = Math.sin(-Math.PI / 4);
+
+        const o3X = p1X + (rx * cos45 - ry * sin45);
+        const o3Y = centerY + (rx * sin45 + ry * cos45);
+        const m3X = m1X - (rx * cos45 - ry * sin45);
+        const m3Y = centerY - (rx * sin45 + ry * cos45);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(o3X, o3Y); ctx.strokeStyle = 'rgba(240, 136, 62, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1X, centerY); ctx.lineTo(o3X, o3Y); ctx.strokeStyle = 'rgba(88, 166, 255, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(o2X, o2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', o2X + 8, o2Y + 4);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 25, m2Y + 4);
+
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(o3X, o3Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', o3X + 10, o3Y - 5);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 35, m3Y + 15);
+
+        rotAngleO2 += 0.025 * speedFactor;
+        rotAngleO3 += 0.035 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 11) {
+        const minOffset = 25; const maxOffset = 160; const gap = 8;
+
+        ctx.beginPath(); ctx.moveTo(centerX - maxOffset - 30, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + maxOffset + 30, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - maxOffset - 50, centerY + 5); ctx.fillText('ー', centerX + maxOffset + 40, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const amplitude = (maxOffset - minOffset) / 2;
+        const centerPos = (maxOffset + minOffset) / 2;
+        const currentPos = centerPos + amplitude * Math.cos(shmPhase);
+
+        const p1X = centerX + currentPos; const m1X = centerX - currentPos;
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 12, centerY - 15);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 15);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(p1X, centerY); ctx.strokeStyle = 'rgba(88, 166, 255, 0.4)'; ctx.lineWidth = 2; ctx.stroke();
+
+        const o2Radius = 75;
+        const o2X = centerX + o2Radius * 0.4 * Math.cos(rotAngleO2); const o2Y = centerY - o2Radius * Math.sin(rotAngleO2);
+        const m2X = centerX - o2Radius * 0.4 * Math.cos(rotAngleO2); const m2Y = centerY + o2Radius * Math.sin(rotAngleO2);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(o2X, o2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', o2X + 8, o2Y + 4);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 25, m2Y + 4);
+
+        const o3Radius = 85;
+        const cos3 = Math.cos(rotAngleO3); const sin3 = Math.sin(rotAngleO3);
+        const rx = o3Radius * cos3; const ry = o3Radius * 0.45 * sin3;
+        const cos45 = Math.cos(-Math.PI / 4); const sin45 = Math.sin(-Math.PI / 4);
+
+        const o3X = centerX + (rx * cos45 - ry * sin45); const o3Y = centerY + (rx * sin45 + ry * cos45);
+        const m3X = centerX - (rx * cos45 - ry * sin45); const m3Y = centerY - (rx * sin45 + ry * cos45);
+
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(o3X, o3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', o3X + 10, o3Y - 5);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 35, m3Y + 15);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(o2X, o2Y); ctx.strokeStyle = 'rgba(240, 136, 62, 0.25)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1X, centerY); ctx.lineTo(o2X, o2Y); ctx.strokeStyle = 'rgba(88, 166, 255, 0.25)'; ctx.lineWidth = 1; ctx.stroke();
+
+        shmPhase += 0.035 * speedFactor; rotAngleO2 += 0.025 * speedFactor; rotAngleO3 += 0.035 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 12) {
+        const gap = 10;
+        const outerLimit = 180;
+
+        const pX1 = centerX + outerLimit;
+        const px_minus1 = centerX + gap;
+        const mX1 = centerX - outerLimit;
+        const mx_minus1 = centerX - gap;
+
+        const pCenter = (pX1 + px_minus1) / 2;
+        const mCenter = (mX1 + mx_minus1) / 2;
+        const rotRadius = 60;
+
+        ctx.beginPath(); ctx.moveTo(mX1, centerY); ctx.lineTo(mx_minus1, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px_minus1, centerY); ctx.lineTo(pX1, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', mX1 - 20, centerY + 5); ctx.fillText('ー', pX1 + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(pCenter, centerY, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(mCenter, centerY, 4, 0, Math.PI * 2); ctx.fill();
+
+        const shmAmplitude = (outerLimit - gap) / 2;
+        const shmCenter = (outerLimit + gap) / 2;
+        const currentPos = shmCenter + shmAmplitude * Math.cos(shmPhase);
+
+        const p1X = centerX + currentPos;
+        const m1X = centerX - currentPos;
+
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const p2X = pCenter + rotRadius * Math.cos(rotAngleO2);
+        const p2Y = pCenter + rotRadius * Math.sin(rotAngleO2);
+        const p3X = pCenter + rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const p3Y = pCenter + rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const m2X = mCenter - rotRadius * Math.cos(rotAngleO2);
+        const m2Y = mCenter - rotRadius * Math.sin(rotAngleO2);
+        const m3X = mCenter - rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const m3Y = mCenter - rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 10, centerY - 12);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 15);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2X, p2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2X + 8, p2Y + 4);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3X, p3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3X + 8, p3Y - 5);
+
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 28, m2Y + 4);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 28, m3Y - 5);
+
+        shmPhase += 0.035 * speedFactor; rotAngleO2 += 0.03 * speedFactor; rotAngleO3 += 0.04 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 13) {
+        const gap = 10;
+        const outerLimit = 180;
+
+        const pX1 = centerX + outerLimit;
+        const px_minus1 = centerX + gap;
+        const mX1 = centerX - outerLimit;
+        const mx_minus1 = centerX - gap;
+
+        const pCenter = (pX1 + px_minus1) / 2;
+        const mCenter = (mX1 + mx_minus1) / 2;
+        const lineHalfLength = (outerLimit - gap) / 2;
+        const rotRadius = 60;
+
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        ctx.save();
+        ctx.translate(pCenter, centerY);
+        ctx.rotate(axisRotAngle);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        const shmPos = lineHalfLength * Math.cos(shmPhase);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('+O1', shmPos - 10, -12);
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(mCenter, centerY);
+        ctx.rotate(-axisRotAngle);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(-shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('-O1', -shmPos - 12, -12);
+
+        ctx.restore();
+
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const p2X = pCenter + rotRadius * Math.cos(rotAngleO2);
+        const p2Y = centerY + rotRadius * Math.sin(rotAngleO2);
+        const p3X = pCenter + rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const p3Y = pCenter + rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const m2X = mCenter - rotRadius * Math.cos(rotAngleO2);
+        const m2Y = centerY - rotRadius * Math.sin(rotAngleO2);
+        const m3X = mCenter - rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const m3Y = centerY - rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2X, p2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2X + 8, p2Y + 4);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3X, p3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3X + 8, p3Y - 5);
+
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 28, m2Y + 4);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 28, m3Y - 5);
+
+        shmPhase += 0.035 * speedFactor; rotAngleO2 += 0.03 * speedFactor; rotAngleO3 += 0.04 * speedFactor;
+        axisRotAngle += 0.015 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 14 || step === 15) {
+        const gap = 10;
+        const outerLimit = 180;
+
+        const pX1 = centerX + outerLimit;
+        const px_minus1 = centerX + gap;
+        const mX1 = centerX - outerLimit;
+        const mx_minus1 = centerX - gap;
+
+        const pCenter = (pX1 + px_minus1) / 2;
+        const mCenter = (mX1 + mx_minus1) / 2;
+        const lineHalfLength = (outerLimit - gap) / 2;
+        const rotRadius = 60;
+
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        ctx.save();
+        ctx.translate(pCenter, centerY);
+        ctx.rotate(axisRotAngle);
+        const scaleY1 = Math.cos(tiltAngle1);
+        ctx.scale(1, scaleY1);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        const shmPos = lineHalfLength * Math.cos(shmPhase);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('+O1', shmPos - 10, -12);
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(mCenter, centerY);
+        ctx.rotate(-axisRotAngle * 1.2);
+        const scaleY2 = Math.cos(tiltAngle2);
+        ctx.scale(1, scaleY2);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(-shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('-O1', -shmPos - 12, -12);
+
+        ctx.restore();
+
+        ctx.beginPath(); ctx.ellipse(pCenter, centerY, rotRadius, rotRadius * Math.abs(scaleY1), axisRotAngle, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(pCenter, centerY, rotRadius * 1.3, rotRadius * 1.3 * Math.abs(scaleY1), axisRotAngle, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const p2X = pCenter + rotRadius * Math.cos(rotAngleO2);
+        const p2Y = centerY + rotRadius * Math.sin(rotAngleO2) * scaleY1;
+        const p3X = pCenter + rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const p3Y = centerY + rotRadius * 1.3 * Math.sin(rotAngleO3) * scaleY1;
+
+        ctx.beginPath(); ctx.ellipse(mCenter, centerY, rotRadius, rotRadius * Math.abs(scaleY2), -axisRotAngle * 1.2, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(mCenter, centerY, rotRadius * 1.3, rotRadius * 1.3 * Math.abs(scaleY2), -axisRotAngle * 1.2, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const m2X = mCenter - rotRadius * Math.cos(rotAngleO2);
+        const m2Y = centerY - rotRadius * Math.sin(rotAngleO2) * scaleY2;
+        const m3X = mCenter - rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const m3Y = centerY - rotRadius * 1.3 * Math.sin(rotAngleO3) * scaleY2;
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2X, p2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2X + 8, p2Y + 4);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3X, p3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3X + 8, p3Y - 5);
+
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 28, m2Y + 4);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 28, m3Y - 5);
+
+        shmPhase += 0.035 * speedFactor;
+        rotAngleO2 += 0.03 * speedFactor;
+        rotAngleO3 += 0.04 * speedFactor;
+        axisRotAngle += 0.02 * speedFactor;
+        tiltAngle1 += 0.015 * speedFactor;
+        tiltAngle2 += 0.011 * speedFactor;
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 16) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const sphereR = 85;
+        const leftCenterX = centerX - sphereR;
+        const rightCenterX = centerX + sphereR;
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(zRotationAngle);
+        ctx.translate(-centerX, -centerY);
+
+        const axisLength = 180;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        ctx.strokeStyle = 'rgba(255, 99, 132, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(centerX - axisLength, centerY);
+        ctx.lineTo(centerX + axisLength, centerY);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 99, 132, 0.7)'; ctx.font = '10px sans-serif'; ctx.fillText('X', centerX + axisLength + 5, centerY + 3);
+
+        ctx.strokeStyle = 'rgba(75, 192, 192, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - axisLength);
+        ctx.lineTo(centerX, centerY + axisLength);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(75, 192, 192, 0.7)'; ctx.fillText('Y', centerX - 3, centerY - axisLength - 5);
+
+        const zOffsetX = axisLength * 0.7; const zOffsetY = axisLength * 0.4;
+        ctx.strokeStyle = 'rgba(54, 162, 235, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(centerX - zOffsetX, centerY + zOffsetY);
+        ctx.lineTo(centerX + zOffsetX, centerY - zOffsetY);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(54, 162, 235, 0.7)'; ctx.fillText('Z', centerX + zOffsetX + 5, centerY - zOffsetY - 5);
+
+        ctx.setLineDash([]);
+
+        drawFirstGenSphere(leftCenterX, centerY, sphereR, false);
+        drawFirstGenSphere(rightCenterX, centerY, sphereR, true);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('0', centerX - 4, centerY + 16);
+
+        ctx.restore();
+
+        shmPhase += 0.08 * speedFactor;
+        rotAngleO2 += 0.07 * speedFactor;
+        rotAngleO3 += 0.09 * speedFactor;
+        axisRotAngle += 0.05 * speedFactor;
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 17) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.01 * speedFactor;
+        drawFirstGenSphere(centerX, centerY, 140, true);
+
+        ctx.fillStyle = '#8b949e'; ctx.font = '12px sans-serif';
+        ctx.fillText('0', centerX - 3, centerY + 16);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 18) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const sphereDist = 135;
+        const sphereR = 80;
+
+        const leftCenterX = centerX - sphereDist;
+        const rightCenterX = centerX + sphereDist;
+
+        drawFirstGenSphere(leftCenterX, centerY, sphereR, false);
+        drawFirstGenSphere(rightCenterX, centerY, sphereR, true);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(leftCenterX, centerY, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(rightCenterX, centerY, 6, 0, Math.PI * 2); ctx.fill();
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#58a6ff';
+        ctx.fillText('中心核 (付け根)', rightCenterX - 42, centerY - 15);
+        ctx.fillStyle = '#f0883e';
+        ctx.fillText('中心核 (付け根)', leftCenterX - 42, centerY - 15);
+
+        const connectOffsets = [-22, 0, 22];
+        connectOffsets.forEach(yOff => {
+          ctx.beginPath();
+          ctx.moveTo(leftCenterX, centerY + yOff);
+          ctx.lineTo(rightCenterX, centerY + yOff);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        });
+
+        const extLength = 110;
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 2;
+        [ -Math.PI / 6, 0, Math.PI / 6 ].forEach(angle => {
+          ctx.beginPath();
+          ctx.moveTo(rightCenterX, centerY);
+          ctx.lineTo(rightCenterX + extLength * Math.cos(angle), centerY + extLength * Math.sin(angle));
+          ctx.stroke();
+        });
+
+        ctx.strokeStyle = '#f0883e';
+        [ Math.PI - Math.PI / 6, Math.PI, Math.PI + Math.PI / 6 ].forEach(angle => {
+          ctx.beginPath();
+          ctx.moveTo(leftCenterX, centerY);
+          ctx.lineTo(leftCenterX + extLength * Math.cos(angle), centerY + extLength * Math.sin(angle));
+          ctx.stroke();
+        });
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 19) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const sphereR = 90;
+        const leftCenterX = centerX - sphereR;
+        const rightCenterX = centerX + sphereR;
+
+        drawFirstGenSphere(leftCenterX, centerY, sphereR, false);
+        drawFirstGenSphere(rightCenterX, centerY, sphereR, true);
+
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('0 (双極の接点)', centerX - 38, centerY + 24);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(leftCenterX, centerY, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(rightCenterX, centerY, 6, 0, Math.PI * 2); ctx.fill();
+
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillStyle = '#58a6ff'; ctx.fillText('中心核', rightCenterX - 18, centerY - 12);
+        ctx.fillStyle = '#f0883e'; ctx.fillText('中心核', leftCenterX - 18, centerY - 12);
+
+        const connectOffsets = [-18, 0, 18];
+        connectOffsets.forEach(yOff => {
+          ctx.beginPath();
+          ctx.moveTo(leftCenterX, centerY + yOff);
+          ctx.lineTo(rightCenterX, centerY + yOff);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
+
+        const extLength = 100;
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 2;
+        [ -Math.PI / 6, 0, Math.PI / 6 ].forEach(angle => {
+          ctx.beginPath();
+          ctx.moveTo(rightCenterX, centerY);
+          ctx.lineTo(rightCenterX + extLength * Math.cos(angle), centerY + extLength * Math.sin(angle));
+          ctx.stroke();
+        });
+
+        ctx.strokeStyle = '#f0883e';
+        [ Math.PI - Math.PI / 6, Math.PI, Math.PI + Math.PI / 6 ].forEach(angle => {
+          ctx.beginPath();
+          ctx.moveTo(leftCenterX, centerY);
+          ctx.lineTo(leftCenterX + extLength * Math.cos(angle), centerY + extLength * Math.sin(angle));
+          ctx.stroke();
+        });
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 20) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const sphereR = 90;
+        const leftCenterX = centerX - sphereR - 10;
+        const rightCenterX = centerX + sphereR + 10;
+
+        drawFirstGenSphere(leftCenterX, centerY, sphereR, false);
+        drawFirstGenSphere(rightCenterX, centerY, sphereR, true);
+
+        ctx.font = 'bold 20px serif';
+        ctx.fillStyle = '#f0883e';
+        ctx.fillText('-OOπO', leftCenterX - 45, centerY + 6);
+
+        ctx.fillStyle = '#58a6ff';
+        ctx.fillText('+OOπO', rightCenterX - 45, centerY + 6);
+
+        shmPhase += 0.04 * speedFactor;
+        rotAngleO2 += 0.03 * speedFactor;
+
+        ctx.strokeStyle = 'rgba(240, 136, 62, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(leftCenterX, centerY, sphereR * 0.7, sphereR * 0.3 * Math.sin(shmPhase), rotAngleO2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(88, 166, 255, 0.4)';
+        ctx.beginPath();
+        ctx.ellipse(rightCenterX, centerY, sphereR * 0.7, sphereR * 0.3 * Math.cos(shmPhase), -rotAngleO2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 21) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        breakEffectPhase += 0.03 * speedFactor;
+
+        const sphereR = 80;
+        const leftCenterX = centerX - 120;
+        const rightCenterX = centerX + 120;
+
+        drawFirstGenSphere(leftCenterX, centerY, sphereR, false);
+        drawFirstGenSphere(rightCenterX, centerY, sphereR, true);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+
+        const wallR = 100 + Math.sin(breakEffectPhase) * 5;
+        ctx.beginPath(); ctx.arc(leftCenterX, centerY, wallR, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(rightCenterX, centerY, wallR, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+
+        const emptyR = 65;
+        ctx.strokeStyle = 'rgba(200, 220, 255, 0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, emptyR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(250, 250, 255, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, emptyR, emptyR * 0.4, breakEffectPhase, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 16px serif';
+        ctx.fillStyle = '#e0e6ed';
+        ctx.fillText('OOπO (無エネルギー)', centerX - 75, centerY + 5);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 22) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.015 * speedFactor;
+
+        const hexR = 120;
+        const subR = 32;
+
+        for (let i = 0; i < 6; i++) {
+          const ang = bipyramidRot + (i * Math.PI) / 3;
+          const px = centerX + hexR * Math.cos(ang);
+          const py = centerY + hexR * 0.7 * Math.sin(ang);
+
+          ctx.strokeStyle = 'rgba(88, 166, 255, 0.7)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(px, py, subR, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.font = '10px sans-serif';
+          ctx.fillStyle = '#79c0ff';
+          ctx.fillText(`OOπO_${i+1}`, px - 18, py + 3);
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(centerX, centerY);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 12 + Math.sin(bipyramidRot * 3) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('新・接点 (創成核)', centerX - 42, centerY + 30);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 23) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.02 * speedFactor;
+
+        const mainHexR = 125;
+        const childR = 18;
+
+        for (let i = 0; i < 6; i++) {
+          const mainAng = bipyramidRot + (i * Math.PI) / 3;
+          const mainX = centerX + mainHexR * Math.cos(mainAng);
+          const mainY = centerY + mainHexR * 0.7 * Math.sin(mainAng);
+
+          ctx.strokeStyle = 'rgba(255, 200, 80, 0.4)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(mainX, mainY);
+          ctx.lineTo(centerX, centerY);
+          ctx.stroke();
+
+          const clusterOffset = 26;
+          const subAngles = [0, (Math.PI * 2) / 3, (Math.PI * 4) / 3];
+
+          subAngles.forEach((subAng) => {
+            const rotSub = subAng + bipyramidRot * 2;
+            const cx = mainX + clusterOffset * Math.cos(rotSub);
+            const cy = mainY + clusterOffset * Math.sin(rotSub);
+
+            const grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, childR);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.5, 'rgba(88, 166, 255, 0.8)');
+            grad.addColorStop(1, 'rgba(188, 140, 255, 0.1)');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, childR, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(cx, cy, childR, 0, Math.PI * 2);
+            ctx.stroke();
+          });
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 20 + Math.sin(bipyramidRot * 4) * 4, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('第3世代創成核 (18-OOπO)', centerX - 65, centerY + 38);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 24) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.015 * speedFactor;
+
+        const cubeSize = 220;
+        const halfSize = cubeSize / 2;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.lineWidth = 1;
+
+        const stepS = cubeSize / 3;
+        for (let i = 0; i <= 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize);
+          ctx.lineTo(centerX - halfSize + i * stepS, centerY + halfSize);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize, centerY - halfSize + i * stepS);
+          ctx.lineTo(centerX + halfSize, centerY - halfSize + i * stepS);
+          ctx.stroke();
+        }
+
+        const depthOffset = 45;
+        for (let i = 0; i <= 3; i++) {
+          for (let j = 0; j <= 3; j++) {
+            ctx.strokeStyle = 'rgba(88, 166, 255, 0.2)';
+            ctx.beginPath();
+            ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize + j * stepS);
+            ctx.lineTo(centerX - halfSize + i * stepS + depthOffset, centerY - halfSize + j * stepS - depthOffset);
+            ctx.stroke();
+          }
+        }
+
+        ctx.strokeStyle = 'rgba(88, 166, 255, 0.25)';
+        for (let i = 0; i <= 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize + depthOffset + i * stepS, centerY - halfSize - depthOffset);
+          ctx.lineTo(centerX - halfSize + depthOffset + i * stepS, centerY + halfSize - depthOffset);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize + depthOffset, centerY - halfSize - depthOffset + i * stepS);
+          ctx.lineTo(centerX + halfSize + depthOffset, centerY - halfSize - depthOffset + i * stepS);
+          ctx.stroke();
+        }
+
+        const mainHexR = 85;
+        const childR = 12;
+
+        for (let i = 0; i < 6; i++) {
+          const mainAng = bipyramidRot + (i * Math.PI) / 3;
+          const mainX = centerX + mainHexR * Math.cos(mainAng);
+          const mainY = centerY + mainHexR * 0.65 * Math.sin(mainAng);
+
+          const clusterOffset = 18;
+          const subAngles = [0, (Math.PI * 2) / 3, (Math.PI * 4) / 3];
+
+          subAngles.forEach((subAng) => {
+            const rotSub = subAng + bipyramidRot * 2;
+            const cx = mainX + clusterOffset * Math.cos(rotSub);
+            const cy = mainY + clusterOffset * Math.sin(rotSub);
+
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx > centerX ? centerX + halfSize : centerX - halfSize, cy);
+            ctx.stroke();
+
+            const grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, childR);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.5, 'rgba(88, 166, 255, 0.8)');
+            grad.addColorStop(1, 'rgba(188, 140, 255, 0.1)');
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, childR, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('3x3x3 (27正方形) 拘束格子壁', centerX - 80, centerY + halfSize + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 25) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.015 * speedFactor;
+
+        const cubeSize = 250;
+        const halfSize = cubeSize / 2;
+        const stepS = cubeSize / 4;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i <= 4; i++) {
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize);
+          ctx.lineTo(centerX - halfSize + i * stepS, centerY + halfSize);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize, centerY - halfSize + i * stepS);
+          ctx.lineTo(centerX + halfSize, centerY - halfSize + i * stepS);
+          ctx.stroke();
+        }
+
+        const depthOffset = 50;
+        for (let i = 0; i <= 4; i++) {
+          for (let j = 0; j <= 4; j++) {
+            ctx.strokeStyle = 'rgba(188, 140, 255, 0.15)';
+            ctx.beginPath();
+            ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize + j * stepS);
+            ctx.lineTo(centerX - halfSize + i * stepS + depthOffset, centerY - halfSize + j * stepS - depthOffset);
+            ctx.stroke();
+          }
+        }
+
+        const mainHexR = 95;
+        const childR = 8;
+        const layerOffsets = [-25, 0, 25];
+
+        layerOffsets.forEach((lOff, layerIdx) => {
+          const layerRot = bipyramidRot + layerIdx * 0.2;
+          const layerColor = layerIdx === 0 ? 'rgba(240, 136, 62, 0.85)' : (layerIdx === 1 ? 'rgba(88, 166, 255, 0.85)' : 'rgba(188, 140, 255, 0.85)');
+
+          for (let i = 0; i < 6; i++) {
+            const mainAng = layerRot + (i * Math.PI) / 3;
+            const mainX = centerX + (mainHexR + lOff * 0.3) * Math.cos(mainAng);
+            const mainY = centerY + lOff + (mainHexR + lOff * 0.3) * 0.5 * Math.sin(mainAng);
+
+            const clusterOffset = 15;
+            const subAngles = [0, (Math.PI * 2) / 3, (Math.PI * 4) / 3];
+
+            subAngles.forEach((subAng) => {
+              const rotSub = subAng + layerRot * 2;
+              const cx = mainX + clusterOffset * Math.cos(rotSub);
+              const cy = mainY + clusterOffset * Math.sin(rotSub);
+
+              ctx.fillStyle = layerColor;
+              ctx.beginPath();
+              ctx.arc(cx, cy, childR, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+              ctx.lineWidth = 0.8;
+              ctx.beginPath();
+              ctx.arc(cx, cy, childR, 0, Math.PI * 2);
+              ctx.stroke();
+            });
+          }
+        });
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('第4世代: 4x4x4マス空間に 18+18+18 (54個) の OOπO が充満', centerX - 140, centerY + halfSize + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 26) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.02 * speedFactor;
+
+        const cubeSize = 280;
+        const halfSize = cubeSize / 2;
+        const stepS = cubeSize / 5;
+        const childR = stepS / 2;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i <= 5; i++) {
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize);
+          ctx.lineTo(centerX - halfSize + i * stepS, centerY + halfSize);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize, centerY - halfSize + i * stepS);
+          ctx.lineTo(centerX + halfSize, centerY - halfSize + i * stepS);
+          ctx.stroke();
+        }
+
+        const depthOffset = 55;
+        for (let i = 0; i <= 5; i++) {
+          for (let j = 0; j <= 5; j++) {
+            ctx.strokeStyle = 'rgba(88, 166, 255, 0.12)';
+            ctx.beginPath();
+            ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize + j * stepS);
+            ctx.lineTo(centerX - halfSize + i * stepS + depthOffset, centerY - halfSize + j * stepS - depthOffset);
+            ctx.stroke();
+          }
+        }
+
+        const gridPositions = [
+          {x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0}, {x: 3, y: 0}, {x: 4, y: 0},
+          {x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1}, {x: 3, y: 1}, {x: 4, y: 1},
+          {x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}, {x: 3, y: 2}, {x: 4, y: 2},
+          {x: 0, y: 3}, {x: 1, y: 3}, {x: 2, y: 3}, {x: 3, y: 3}, {x: 4, y: 3},
+          {x: 0, y: 4}, {x: 1, y: 4}, {x: 2, y: 4}, {x: 3, y: 4}, {x: 4, y: 4}
+        ];
+
+        gridPositions.forEach((pos, idx) => {
+          const cx = centerX - halfSize + (pos.x + 0.5) * stepS;
+          const cy = centerY - halfSize + (pos.y + 0.5) * stepS;
+
+          const grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, childR);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.6, idx % 2 === 0 ? 'rgba(88, 166, 255, 0.65)' : 'rgba(240, 136, 62, 0.65)');
+          grad.addColorStop(1, 'rgba(188, 140, 255, 0.1)');
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(cx, cy, childR, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(cx, cy, childR, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('1マスの1辺 ＝ OOπOの直径 (マスにピッタリ内接設定)', centerX - 140, centerY + halfSize + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 27) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        shmPhase += 0.04 * speedFactor;
+        bipyramidRot += 0.015 * speedFactor;
+
+        const cubeSize = 270;
+        const halfSize = cubeSize / 2;
+        const stepS = cubeSize / 5;
+        const childR = stepS / 2;
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i <= 5; i++) {
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize + i * stepS, centerY - halfSize);
+          ctx.lineTo(centerX - halfSize + i * stepS, centerY + halfSize);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(centerX - halfSize, centerY - halfSize + i * stepS);
+          ctx.lineTo(centerX + halfSize, centerY - halfSize + i * stepS);
+          ctx.stroke();
+        }
+
+        for (let i = 0; i < 5; i++) {
+          for (let j = 0; j < 5; j++) {
+            const cx = centerX - halfSize + (i + 0.5) * stepS;
+            const cy = centerY - halfSize + (j + 0.5) * stepS;
+
+            ctx.fillStyle = 'rgba(120, 130, 140, 0.5)';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        for (let i = 0; i < 5; i++) {
+          for (let j = 0; j < 5; j++) {
+            const cx = centerX - halfSize + (i + 0.5) * stepS;
+            const cy = centerY - halfSize + (j + 0.5) * stepS;
+
+            const waveX = Math.cos(shmPhase + i + j) * 6;
+            const waveY = Math.sin(shmPhase + i - j) * 6;
+
+            ctx.strokeStyle = 'rgba(88, 166, 255, 0.65)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(cx + waveX, cy + waveY, childR * 0.75, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+
+        const outerCount = 37;
+        const outerR = halfSize + 30;
+
+        for (let k = 0; k < outerCount; k++) {
+          const ang = bipyramidRot + (k * Math.PI * 2) / outerCount;
+          const ox = centerX + (outerR + Math.sin(shmPhase * 2 + k) * 12) * Math.cos(ang);
+          const oy = centerY + (outerR * 0.75 + Math.cos(shmPhase * 2 + k) * 12) * Math.sin(ang);
+
+          const grad = ctx.createRadialGradient(ox, oy, 1, ox, oy, childR * 0.8);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.5, '#f0883e');
+          grad.addColorStop(1, 'rgba(240, 136, 62, 0.1)');
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(ox, oy, childR * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(ox, oy, childR * 0.8, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('125個の止(固定・拘束・死) ＋ [125 OπO ＋ 37 OOπO] の動(生・存在)', centerX - 160, centerY + halfSize + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 28) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        shmPhase += 0.05 * speedFactor;
+        bipyramidRot += 0.02 * speedFactor;
+
+        const mainParticleR = 120;
+
+        const particleGrad = ctx.createRadialGradient(centerX, centerY, 5, centerX, centerY, mainParticleR);
+        particleGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        particleGrad.addColorStop(0.3, 'rgba(88, 166, 255, 0.7)');
+        particleGrad.addColorStop(0.7, 'rgba(188, 140, 255, 0.4)');
+        particleGrad.addColorStop(1, 'rgba(240, 136, 62, 0.15)');
+
+        ctx.fillStyle = particleGrad;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, mainParticleR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, mainParticleR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const subElemCount = 37;
+        const innerOrbitR = mainParticleR * 0.65;
+
+        for (let i = 0; i < subElemCount; i++) {
+          const ang = bipyramidRot + (i * Math.PI * 2) / subElemCount;
+          const px = centerX + innerOrbitR * Math.cos(ang);
+          const py = centerY + innerOrbitR * 0.6 * Math.sin(ang);
+
+          ctx.fillStyle = '#f0883e';
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(88, 166, 255, 0.35)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(centerX, centerY);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('225要素粒子 (187のO ＋ 38のπ) ＝ 3x3x5x5', centerX - 130, centerY + mainParticleR + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 29) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        shmPhase += 0.05 * speedFactor;
+        bipyramidRot += 0.02 * speedFactor;
+
+        const outerParticleR = 135;
+
+        const massGrad = ctx.createRadialGradient(centerX, centerY, 25, centerX, centerY, outerParticleR);
+        massGrad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
+        massGrad.addColorStop(0.3, 'rgba(255, 215, 0, 0.6)');
+        massGrad.addColorStop(0.7, 'rgba(88, 166, 255, 0.4)');
+        massGrad.addColorStop(1, 'rgba(240, 136, 62, 0.1)');
+
+        ctx.fillStyle = massGrad;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerParticleR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerParticleR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const orbCount = 36;
+        const orbR = outerParticleR * 0.7;
+
+        for (let i = 0; i < orbCount; i++) {
+          const ang = bipyramidRot + (i * Math.PI * 2) / orbCount;
+          const px = centerX + orbR * Math.cos(ang);
+          const py = centerY + orbR * 0.55 * Math.sin(ang);
+
+          ctx.fillStyle = '#58a6ff';
+          ctx.beginPath();
+          ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(px, py, 7, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('37(1+36)の質量変換 ｜ 162x4=648 / 486のO＋162のπ', centerX - 150, centerY + outerParticleR + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 30) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.02 * speedFactor;
+
+        const cubeSize = 300;
+        drawGrid(6, cubeSize);
+
+        const halfSize = cubeSize / 2;
+        const mainR = 110;
+        const subCount = 18;
+
+        for (let i = 0; i < subCount; i++) {
+          const ang = bipyramidRot + (i * Math.PI * 2) / subCount;
+          const px = centerX + mainR * Math.cos(ang);
+          const py = centerY + mainR * 0.6 * Math.sin(ang);
+
+          ctx.fillStyle = 'rgba(88, 166, 255, 0.8)';
+          ctx.beginPath();
+          ctx.arc(px, py, 7, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(px - 3, py - 2, 2, 0, Math.PI * 2); ctx.fill();
+          if (i % 2 === 0) {
+            ctx.beginPath(); ctx.arc(px + 3, py + 2, 2, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('第6世代: 6x6x6(216マス) ｜ 486個のOOπO ｜ 質量化要素1〜2個', centerX - 160, centerY + halfSize + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 31) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        bipyramidRot += 0.025 * speedFactor;
+
+        const cubeSize = 320;
+        drawGrid(7, cubeSize);
+
+        const halfSize = cubeSize / 2;
+        const mainR = 125;
+        const subCount = 27;
+
+        for (let i = 0; i < subCount; i++) {
+          const ang = bipyramidRot + (i * Math.PI * 2) / subCount;
+          const px = centerX + mainR * Math.cos(ang);
+          const py = centerY + mainR * 0.6 * Math.sin(ang);
+
+          ctx.fillStyle = i % 3 === 0 ? 'rgba(255, 215, 0, 0.9)' : 'rgba(88, 166, 255, 0.8)';
+          ctx.beginPath();
+          ctx.arc(px, py, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(px - 2, py - 2, 1.8, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(px + 2, py - 2, 1.8, 0, Math.PI * 2); ctx.fill();
+          if (i % 2 === 0) {
+            ctx.beginPath(); ctx.arc(px, py + 3, 1.8, 0, Math.PI * 2); ctx.fill();
+          }
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(centerX, centerY);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 18, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('第7世代: 7x7x7(343マス) ｜ 1458個 ｜ 質量化要素1〜3個 ｜ 原子・素粒子の誕生', centerX - 175, centerY + halfSize + 25);
+
+        animId = requestAnimationFrame(draw);
+      }
+    }
+
+    function updateText() {
+      if (step >= 8 && step <= 16) {
+        controls.style.display = 'flex';
+        zControl.style.display = (step === 16) ? 'inline-flex' : 'none';
+      } else {
+        controls.style.display = 'none';
+      }
+
+      if (step === 1) {
+        storyContainer.innerHTML = `
+          <div style="font-size: 1.1rem; line-height: 2;">
+            始まりは、何もない。<br>
+            しかし関係性は双極である。<br>
+            双極の場も、それがある・無しの双極で、境界で別れる。<br>
+            最初は境界もない。
+          </div>
+        `;
+      } else if (step === 2) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">直線の双極と円環宇宙論</div>
+          <div class="concept-body">
+            <p>1. 幾何学的基礎：直線の双極と閉じた空間</p>
+            <p>2. 宇宙創成への適用：時間とインフレーション</p>
+          </div>
+        `;
+      } else if (step === 3) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">宇宙の始まり</div>
+          <div class="concept-body">
+            <p>在る無しの空間で、場があると場がないが生まれた。<br>誕生したのは双極の2つ（OO）である。</p>
+          </div>
+        `;
+      } else if (step === 4) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">線分の確立：＋O1 と 0 と －O1</div>
+          <div class="concept-body"><p>－O1 と 0 と ＋O1 の間に直線 「ーー」 が結ばれる。</p></div>
+        `;
+      } else if (step === 5) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">直交極 ＋O2 / ＋O3</div>
+          <div class="concept-body"><p>＋O1と－O1に直交して ＋O2、さらに直交して ＋O3 が誕生する。</p></div>
+        `;
+      } else if (step === 6) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">負の直交双極：－O2 / －O3</div>
+          <div class="concept-body"><p>－O1 からも －O2, －O3 が誕生している。</p></div>
+        `;
+      } else if (step === 7) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O1と0からの直線「ー」の伸張</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              －O1 と 0 と ＋O1 から「ー」の線を外側へと伸ばし、先端に「ー」を配置する。
+            </p>
+          </div>
+        `;
+      } else if (step === 8) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">運動の開始：軸の拘束と O1 の引き合い</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>軸は固定され、0点で分断（切れ目）されている。</b><br>
+              ＋O1 と －O1 は軸上に拘束されたまま、<br>
+              最初の<b>「引き合う運動」</b>を始める。
+            </p>
+          </div>
+        `;
+      } else if (step === 9) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O2 の円運動：押され引き寄せられる力学</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>O2 は円運動を始める。</b><br>
+              回転中心は <b>O1 が存在する位置</b> となり、<br>
+              <b>－O1</b> に押され（反発）、<b>＋O1</b> に引かれ（引力）ながら回転運動を行う。
+            </p>
+          </div>
+        `;
+      } else if (step === 10) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O3 の周回連動：立体連動場の確立</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>O3 もまわる。</b><br>
+              回転中心は O2 と同様に <b>O1 が存在する位置</b> となり、<br>
+              固定軸「ー」の周りで O2 と同心円状の全方位的な幾何学回転場が成立する。
+            </p>
+          </div>
+        `;
+      } else if (step === 11) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O1 の単振動運動：力学の原点</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>O1 は ーー 上を単振動する。</b><br>
+              ＋O1 と －O1 は、固定軸「ーー」の上を完全に拘束されたまま往復運動（単振動）し、<br>
+              その共振エネルギーが O2 や O3 の回転場を駆動する。
+            </p>
+          </div>
+        `;
+      } else if (step === 12) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">－O2 を中心とする幾何学回転構造</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>＋O2 が回るときの中心は ＋X1 と ＋x-1 の中心。</b><br>
+              <b>－x軸側の －X1 と －x-1 の中心が －O2（回転中心）となる。</b><br>
+              <b>＋O1 / －O1 の振幅は x-1 ～ X1 の「ーー」区間内。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 13) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">二重軸回転：ーー 自体の中心回転</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>＋x軸と －x軸の「ーー」自体もそれぞれの中心で回転する。</b><br>
+              回転する「ーー」の上を O1 が単振動しながら、<br>
+              O2, O3 がその中心を周回する複合宇宙力学モデルが成立する。
+            </p>
+          </div>
+        `;
+      } else if (step === 14) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">動的平衡宇宙：全方位3次元自由回転の成立</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>「ーー」の中心から「ーー」は平面拘束されていない、自由回転である。</b><br>
+              原点0、回転する軸線「ーー」、単振動する O1、周回する O2/O3。<br>
+              <b>4つのものが強固な関係性を持ち、無限に動き続ける。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 15) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">双極球体の完成：二丸の創成</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>最後に O の軌道を塗りつぶせば、2つの球（双極球体）が完成する。</b><br>
+              全方位へ回転・振動を重ねた点と軸線の運動密度が充満し、<br>
+              原点0を挟んだふたつの安定した実体球が形成された。
+            </p>
+          </div>
+        `;
+      } else if (step === 16) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第一世代の誕生（The First Generation）</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              何もないところから、双極の関係から生まれたものが、<br>
+              生きるために動き出し、境界を持つ1つの空間と<br>
+              <b>エネルギーが飽和した球体が2つ誕生した。</b><br><br>
+              <b>これが、第一世代である。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 17) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第一世代の内部構造：双極と三角双錘</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              内包した空間の中に <b>＋青</b> と <b>ー赤</b> の球が存在し、<br>
+              その状態は <b>三角双錘（Triangular Bipyramid）</b> に包まれている。<br>
+              全体は <b>フレミングの左右の指先が結ばれた構造網</b> で覆われている。
+            </p>
+          </div>
+        `;
+      } else if (step === 18) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第一世代の到達構造：6本線と指先結合</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>「これが第一世代である」のページの球を2つ並べ、ここで止める。</b><br><br>
+              その二つを繋いでいるのが<b>3本の指</b>であり、<br>
+              <b>球の中心が3本の指の付け根（中心核）にある。ここで止める。</b><br><br>
+              付け根の中心から反対側にも3本伸び、<br>
+              <b>左右の球から計6本の線が生まれる。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 19) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">0（双極の接点）：実体のない境界</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>0点の中心に点は置かない。</b><br>
+              双極の0であり、0に点は存在できない。<b>接しているだけ。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 20) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">接点の消滅と －OOπO / ＋OOπO の誕生</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>接点は消して、－OOπO と ＋OOπO の誕生。</b><br><br>
+              虚上の接点（0）は消失し、独自の円周周回系 ($\pi$) を内包した<br>
+              独立自律の双極構造 <b>－OOπO</b>（負）と <b>＋OOπO</b>（正）が誕生した。
+            </p>
+          </div>
+        `;
+      } else if (step === 21) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">光速の壁の穿孔と無エネルギー空間の出現</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>誕生と共に光速の壁に閉じ込められている。</b><br>
+              <b>その壁が破れ、エネルギーのない OOπO が誕生する。</b><br><br>
+              飽和した臨界運動により光速の拘束壁が穿孔・解放され、<br>
+              エネルギーの干渉を受けない純粋幾何学空間 <b>OOπO</b> が現出する。
+            </p>
+          </div>
+        `;
+      } else if (step === 22) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">6つの OOπO と高次接点の創成</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>6つの OOπO が誕生して接点が作られる。</b><br><br>
+              幾何学の調和配置により<b>6つの OOπO</b>（第2世代）が誕生し、<br>
+              それらの力線が中央で交差することによって、高次における<b>「新たな接点（創成核）」</b>が構築される。
+            </p>
+          </div>
+        `;
+      } else if (step === 23) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第3世代の誕生：光速励起と18の OOπO</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>第2世代のそれぞれの OOπO はまた光速まで励起して、</b><br>
+              <b>それぞれが2つを生み出し、6から18の OOπO が誕生する。</b><br><br>
+              <b>これが、第3世代である。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 24) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第3世代の拘束壁：3x3x3の27正方形グリッド</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>この第3世代はXYZの直線の壁（軌道がないと進めない壁）、</b><br>
+              <b>すなわち 3x3x3 の 27の正方形の壁に囲まれている。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 25) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第4世代の創成：4x4x4格子と54個の OOπO</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>第4世代は 4x4x4 のマスの中に、</b><br>
+              <b>18 ＋ 18 ＋ 18 の 54個が誕生している。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 26) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第5世代の等価束縛：1マス1辺 ＝ OOπO直径</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>1つのマスの1辺と OOπO の直径は同じである。</b><br>
+              第5世代 5x5x5 のマスの中に 54 x 3 (162個) の OOπO が誕生する。
+            </p>
+          </div>
+        `;
+      } else if (step === 27) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">動静の原理：生（動）と死（止）のエネルギー平衡</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>162 － 125 ＝ 37 個ははみだし、125 個は動けなくなる。</b><br>
+              <b>動が生、止は死。動が存在、止が消滅。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 28) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">225要素の素粒子創成：数理調和格子</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>125の O が一つになった球の中に OOπO 37個が OπO と共に</b><br>
+              <b>一つの OπO と同じ大きさになればよい。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 29) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">37の質量変換と空間成立の絶対定理</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>37の OOπO は 1の OOπO と 36の OOπO。</b><br>
+              162 x 4 ＝ 648 (総数) ｜ 486の O と 162の π。<br>
+              <b>125の中に OOπO 37個分のエネルギーが質量に代わることでこの空間は成立する。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 30) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第6世代の結合：6x6x6(216マス)と486個の OOπO</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>6世代では 6x6x6 の 216マスの中に 162 x 3 ＝ 486 が一つの空間になる。</b><br><br>
+              <b>O の中に OπO と、OπO の大きさと同じで質量となったものが1つ以上2つまで。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 31) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第7世代と物質の創成：原子・素粒子の結晶</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>7世代では 7x7x7 の 343のマスの中に 1458 が存在できる空間になる。</b><br><br>
+              <b>O の中に OπO と、OπO の大きさと同じで質量となったものが1つ以上3つまで。</b><br><br>
+              <b>その組み合わせの中で原子や素粒子になっていった。</b>
+            </p>
+            <div class="orbital-image-box">
+              <img src="image_agent_tag_4468413590975017117" alt="立体格子の幾何学調和（原子軌道モデル）">
+              <div class="orbital-caption">立体格子の幾何学調和（原子軌道モデル）<br>ソース: Anna Zlamana / Getty Images</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    changeStep(0);
+  </script>
+</body>
+</html>
