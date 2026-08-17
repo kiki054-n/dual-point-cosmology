@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>無限循環の宇宙創成論 | Dual-Point Cosmology</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #0d0f12;
+      color: #e0e6ed;
+      font-family: sans-serif;
+      line-height: 1.6;
+    }
+    header {
+      padding: 2rem;
+      text-align: center;
+      border-bottom: 1px solid #1a2332;
+    }
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .concept-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    canvas {
+      display: block;
+      margin: 2rem auto;
+      background: #000;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>直線の双極と円環宇宙論</h1>
+    <p>幾何学の極限構造から紐解くビッグバンとビッグクランチの同一性</p>
+  </header>
+  <main>
+    <section class="concept-card">
+      <h2>1. 幾何学的基礎：直線の双極と閉じた空間</h2>
+      <p>球面幾何学において、一直線上に進み続ける運動は無限遠で反対側の極（双極）に達し、最終的に始点へと戻る大きな「円」を描きます。局所的な「直線」の概念は、大域的には「円周」として完成します。</p>
+    </section>
+
+    <section class="concept-card">
+      <h2>2. 宇宙創成への適用：時間とインフレーション</h2>
+      <p>時間の矢を1次元の「直線」として捉えた場合、始点である**ビッグバン**と終点である**ビッグクランチ**（または無限の収縮点）は同一の極として結ばれます。宇宙の誕生と終焉は独立した2点ではなく、1つの極限状態の表と裏です。</p>
+    </section>
+
+    <canvas id="cosmoCanvas" width="300" height="300"></canvas>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('cosmoCanvas');
+    const ctx = canvas.getContext('2d');
+    let angle = 0;
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 円周（宇宙空間のループ）を描画
+      ctx.beginPath();
+      ctx.arc(150, 150, 100, 0, Math.PI * 2);
+      ctx.strokeStyle = '#388bfd';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 直線的な移動（時間経過）が円周上を回るアニメーション
+      const x = 150 + 100 * Math.cos(angle);
+      const y = 150 + 100 * Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#58a6ff';
+      ctx.fill();
+
+      angle += 0.02;
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>
