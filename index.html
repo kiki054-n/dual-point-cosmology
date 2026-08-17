@@ -15,7 +15,7 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
-      overflow-y: auto; /* スクロールを有効化 */
+      overflow-y: auto;
       box-sizing: border-box;
     }
     #story-container {
@@ -32,11 +32,6 @@
       color: #58a6ff;
       margin-bottom: 0.5rem;
     }
-    .concept-subtitle {
-      font-size: 1rem;
-      color: #8b949e;
-      margin-bottom: 1rem;
-    }
     .concept-body {
       text-align: left;
       font-size: 0.95rem;
@@ -46,22 +41,31 @@
       padding: 1.5rem;
       font-family: sans-serif;
     }
-    .concept-body h3 {
-      margin: 1rem 0 0.3rem 0;
-      font-size: 1rem;
-      color: #f0883e;
-    }
-    .concept-body h3:first-child {
-      margin-top: 0;
-    }
     canvas {
       cursor: pointer;
       border-radius: 8px;
       max-width: 100%;
       height: auto;
     }
+    .controls-container {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(22, 27, 34, 0.8);
+      padding: 0.6rem 1.2rem;
+      border-radius: 20px;
+      border: 1px solid #30363d;
+      font-family: sans-serif;
+      font-size: 0.85rem;
+      color: #c9d1d9;
+    }
+    .controls-container input[type=range] {
+      cursor: pointer;
+      accent-color: #58a6ff;
+    }
     .hint {
-      margin-top: 1.5rem;
+      margin-top: 1rem;
       margin-bottom: 2rem;
       font-size: 0.85rem;
       color: #8b949e;
@@ -79,121 +83,505 @@
   </div>
 
   <canvas id="cosmoCanvas" width="500" height="400"></canvas>
+  
+  <div class="controls-container" id="controls" style="display: none;">
+    <label for="speedSlider">運動速度:</label>
+    <input type="range" id="speedSlider" min="0" max="3" step="0.1" value="1">
+    <span id="speedValue">1.0x</span>
+  </div>
+
   <div class="hint">画面（またはキャンバス）をクリックして次のステップへ進む</div>
 
   <script>
     const canvas = document.getElementById('cosmoCanvas');
     const ctx = canvas.getContext('2d');
     const storyContainer = document.getElementById('story-container');
+    const controls = document.getElementById('controls');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
 
     let step = 0;
-    let opacity = 0;
-    let angle = 0;
+    let speedFactor = 1.0;
+
+    speedSlider.addEventListener('input', (e) => {
+      speedFactor = parseFloat(e.target.value);
+      speedValue.textContent = speedFactor.toFixed(1) + 'x';
+    });
+
+    let shmPhase = 0;
+    let rotAngleO2 = 0;
+    let rotAngleO3 = 0;
+    let axisRotAngle = 0;
+    let tiltAngle1 = 0;
+    let tiltAngle2 = 0;
+    let animId = null;
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       const centerX = canvas.width / 2;
-      const circleCenterY = 160;
-      const radius = 100;
-      const lineY = 320;
+      const centerY = canvas.height / 2;
+
+      // 段階 15: 軌跡を塗りつぶして球を可視化するため背景消去を極極薄（0.03）に設定
+      if (step === 15) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (step >= 8) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
 
       if (step === 0) {
         // 段階 0: 完全なる無
       } 
       else if (step === 1) {
-        // 段階 1: 無と有の双極と境界
-        if (opacity < 1) opacity += 0.02;
-
-        ctx.globalAlpha = opacity;
-        
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, centerX, canvas.height);
-        ctx.fillStyle = '#11161d';
-        ctx.fillRect(centerX, 0, centerX, canvas.height);
-
-        // 境界線
-        ctx.beginPath();
-        ctx.moveTo(centerX, 0);
-        ctx.lineTo(centerX, canvas.height);
-        ctx.strokeStyle = '#30363d';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // 境界上の双極
-        ctx.beginPath();
-        ctx.arc(centerX - 80, circleCenterY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(centerX + 80, circleCenterY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#f0883e';
-        ctx.fill();
-
-        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, centerX, canvas.height);
+        ctx.fillStyle = '#11161d'; ctx.fillRect(centerX, 0, centerX, canvas.height);
+        ctx.beginPath(); ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height); ctx.strokeStyle = '#30363d'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.arc(centerX - 80, 160, 4, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+        ctx.beginPath(); ctx.arc(centerX + 80, 160, 4, 0, Math.PI * 2); ctx.fillStyle = '#f0883e'; ctx.fill();
       }
       else if (step === 2) {
-        // 段階 2: 円環と独立した直線の双極運動
-
-        // 円軌道
-        ctx.beginPath();
-        ctx.arc(centerX, circleCenterY, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = '#1f6beb';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // 円周上の点
-        const circleX = centerX + radius * Math.cos(angle);
-        const circleY = circleCenterY + radius * Math.sin(angle);
-
-        ctx.beginPath();
-        ctx.arc(circleX, circleY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#58a6ff';
-        ctx.fill();
-
-        // 独立した直線軸
-        ctx.beginPath();
-        ctx.moveTo(centerX - radius, lineY);
-        ctx.lineTo(centerX + radius, lineY);
-        ctx.strokeStyle = '#30363d';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // 直線の双極（両端点）
-        ctx.fillStyle = '#f85149';
-        ctx.beginPath();
-        ctx.arc(centerX - radius, lineY, 5, 0, Math.PI * 2);
-        ctx.arc(centerX + radius, lineY, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 直線上を往復する点
-        const lineX = centerX + radius * Math.cos(angle);
-
-        ctx.beginPath();
-        ctx.arc(lineX, lineY, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#f0883e';
-        ctx.fill();
-
-        // 位相を示すガイド点線
-        ctx.beginPath();
-        ctx.setLineDash([2, 4]);
-        ctx.moveTo(lineX, circleCenterY + radius);
-        ctx.lineTo(lineX, lineY);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        angle += 0.02;
+        const circleCenterY = 160; const radius = 100; const lineY = 320;
+        ctx.beginPath(); ctx.arc(centerX, circleCenterY, radius, 0, Math.PI * 2); ctx.strokeStyle = '#1f6beb'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.arc(centerX + radius, circleCenterY, 6, 0, Math.PI * 2); ctx.fillStyle = '#58a6ff'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(centerX - radius, lineY); ctx.lineTo(centerX + radius, lineY); ctx.strokeStyle = '#30363d'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#f85149'; ctx.beginPath(); ctx.arc(centerX - radius, lineY, 5, 0, Math.PI * 2); ctx.arc(centerX + radius, lineY, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(centerX + radius, lineY, 6, 0, Math.PI * 2); ctx.fillStyle = '#f0883e'; ctx.fill();
       }
+      else if (step === 3) {
+        ctx.beginPath(); ctx.moveTo(centerX, 50); ctx.lineTo(centerX, 350); ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(centerX, 150); ctx.lineTo(centerX - 120, 150); ctx.strokeStyle = '#f0883e'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - 60, 150, 6, 0, Math.PI * 2); ctx.arc(centerX - 120, 150, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(centerX, 250); ctx.lineTo(centerX + 120, 250); ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + 60, 250, 6, 0, Math.PI * 2); ctx.arc(centerX + 120, 250, 6, 0, Math.PI * 2); ctx.fill();
+      }
+      else if (step === 4) {
+        const dist = 120;
+        ctx.beginPath(); ctx.moveTo(centerX - dist, centerY); ctx.lineTo(centerX + dist, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#8b949e'; ctx.font = '14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 20);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - dist, centerY, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O1', centerX - dist - 15, centerY - 15);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + dist, centerY, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O1', centerX + dist - 10, centerY - 15);
+      }
+      else if (step === 5) {
+        const dist = 110; const diagDist = dist * 0.75;
+        ctx.beginPath(); ctx.moveTo(centerX - dist, centerY); ctx.lineTo(centerX + dist, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX, centerY - dist); ctx.lineTo(centerX, centerY + dist); ctx.strokeStyle = '#38d430'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX - diagDist, centerY + diagDist); ctx.lineTo(centerX + diagDist, centerY - diagDist); ctx.strokeStyle = '#bc8cff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#8b949e'; ctx.font = '12px sans-serif'; ctx.fillText('0', centerX + 8, centerY + 15);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - dist, centerY, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O1', centerX - dist - 25, centerY + 4);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + dist, centerY, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O1', centerX + dist + 10, centerY + 4);
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(centerX, centerY - dist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O2', centerX - 12, centerY - dist - 12);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(centerX + diagDist, centerY - diagDist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O3', centerX + diagDist + 10, centerY - diagDist - 6);
+      }
+      else if (step === 6) {
+        const dist = 110; const diagDist = dist * 0.75;
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 5);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(centerX + dist, centerY, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O1', centerX + dist + 10, centerY + 5);
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(centerX, centerY - dist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O2', centerX - 12, centerY - dist - 10);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(centerX + diagDist, centerY - diagDist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('+O3', centerX + diagDist + 10, centerY - diagDist - 5);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(centerX - dist, centerY, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O1', centerX - dist - 35, centerY + 5);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(centerX, centerY + dist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O2', centerX - 12, centerY + dist + 20);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(centerX - diagDist, centerY + diagDist, 7, 0, Math.PI * 2); ctx.fill(); ctx.fillText('-O3', centerX - diagDist - 35, centerY + diagDist + 10);
+      }
+      else if (step === 7) {
+        const baseDist = 100; const extLength = 190;
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(centerX, centerY, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
 
-      requestAnimationFrame(draw);
+        const p1 = { x: centerX + baseDist, y: centerY };
+        const p2 = { x: centerX, y: centerY - 90 };
+        const p3 = { x: centerX + 65, y: centerY - 65 };
+        const m1 = { x: centerX - baseDist, y: centerY };
+        const m2 = { x: centerX, y: centerY + 90 };
+        const m3 = { x: centerX - 65, y: centerY + 65 };
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1.x, p1.y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1 (親指)', p1.x - 15, p1.y - 12);
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2.x, p2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2 (人指)', p2.x - 20, p2.y - 10);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3.x, p3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3 (中指)', p3.x + 10, p3.y - 5);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1.x, m1.y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1 (親指)', m1.x - 25, m1.y - 12);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2.x, m2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2 (人指)', m2.x - 20, m2.y + 20);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3.x, m3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3 (中指)', m3.x - 75, m3.y + 15);
+      }
+      else if (step === 8) {
+        const baseDist = 120; const extLength = 190; const gap = 8;
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const p2 = { x: centerX, y: centerY - 90 }; const p3 = { x: centerX + 65, y: centerY - 65 };
+        const m2 = { x: centerX, y: centerY + 90 }; const m3 = { x: centerX - 65, y: centerY + 65 };
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2.x, p2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2.x - 12, p2.y - 10);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3.x, p3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3.x + 10, p3.y - 5);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2.x, m2.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2.x - 12, m2.y + 20);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3.x, m3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3.x - 75, m3.y + 15);
+
+        const attraction = (Math.sin(shmPhase) + 1) * 0.5;
+        const currentDist = baseDist - (baseDist - 25) * attraction;
+        const p1X = centerX + currentDist; const m1X = centerX - currentDist;
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(p1X, centerY); ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 10, centerY - 12);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 12);
+
+        shmPhase += 0.03 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 9) {
+        const baseDist = 120; const extLength = 190; const gap = 8;
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const p1X = centerX + baseDist * 0.8; const m1X = centerX - baseDist * 0.8;
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 10, centerY - 12);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 12);
+
+        const p3 = { x: centerX + 65, y: centerY - 65 }; const m3 = { x: centerX - 65, y: centerY + 65 };
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3.x, p3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3.x + 10, p3.y - 5);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3.x, m3.y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3.x - 75, m3.y + 15);
+
+        const o2Radius = 80;
+        ctx.beginPath(); ctx.ellipse(centerX, centerY, o2Radius * 0.4, o2Radius, 0, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.25)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+
+        const o2X = centerX + o2Radius * 0.4 * Math.cos(rotAngleO2);
+        const o2Y = centerY - o2Radius * Math.sin(rotAngleO2);
+        const m2X = centerX - o2Radius * 0.4 * Math.cos(rotAngleO2);
+        const m2Y = centerY + o2Radius * Math.sin(rotAngleO2);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(o2X, o2Y); ctx.strokeStyle = 'rgba(240, 136, 62, 0.4)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(o2X, o2Y); ctx.lineTo(p1X, centerY); ctx.strokeStyle = 'rgba(88, 166, 255, 0.4)'; ctx.lineWidth = 1; ctx.stroke();
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(o2X, o2Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', o2X + 10, o2Y + 4);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 30, m2Y + 4);
+
+        rotAngleO2 += 0.03 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 10) {
+        const baseDist = 120; const extLength = 190; const gap = 8;
+
+        ctx.beginPath(); ctx.moveTo(centerX - extLength, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + extLength, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - extLength - 20, centerY + 5); ctx.fillText('ー', centerX + extLength + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const p1X = centerX + baseDist * 0.8; const m1X = centerX - baseDist * 0.8;
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 10, centerY - 12);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 12);
+
+        const o2Radius = 80;
+        ctx.beginPath(); ctx.ellipse(centerX, centerY, o2Radius * 0.4, o2Radius, 0, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.2)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]); ctx.stroke();
+        const o2X = centerX + o2Radius * 0.4 * Math.cos(rotAngleO2);
+        const o2Y = centerY - o2Radius * Math.sin(rotAngleO2);
+        const m2X = centerX - o2Radius * 0.4 * Math.cos(rotAngleO2);
+        const m2Y = centerY + o2Radius * Math.sin(rotAngleO2);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(o2X, o2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', o2X + 8, o2Y + 4);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 25, m2Y + 4);
+
+        const o3Radius = 90;
+        ctx.beginPath(); ctx.ellipse(centerX, centerY, o3Radius, o3Radius * 0.45, -Math.PI / 4, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+
+        const cos3 = Math.cos(rotAngleO3); const sin3 = Math.sin(rotAngleO3);
+        const rx = o3Radius * cos3; const ry = o3Radius * 0.45 * sin3;
+        const cos45 = Math.cos(-Math.PI / 4); const sin45 = Math.sin(-Math.PI / 4);
+
+        const o3X = centerX + (rx * cos45 - ry * sin45);
+        const o3Y = centerY + (rx * sin45 + ry * cos45);
+        const m3X = centerX - (rx * cos45 - ry * sin45);
+        const m3Y = centerY - (rx * sin45 + ry * cos45);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(o3X, o3Y); ctx.strokeStyle = 'rgba(240, 136, 62, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1X, centerY); ctx.lineTo(o3X, o3Y); ctx.strokeStyle = 'rgba(88, 166, 255, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(o3X, o3Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', o3X + 10, o3Y - 5);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 7, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 35, m3Y + 15);
+
+        rotAngleO2 += 0.025 * speedFactor;
+        rotAngleO3 += 0.035 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 11) {
+        const minOffset = 25; const maxOffset = 160; const gap = 8;
+
+        ctx.beginPath(); ctx.moveTo(centerX - maxOffset - 30, centerY); ctx.lineTo(centerX - gap, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(centerX + gap, centerY); ctx.lineTo(centerX + maxOffset + 30, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', centerX - maxOffset - 50, centerY + 5); ctx.fillText('ー', centerX + maxOffset + 40, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        const amplitude = (maxOffset - minOffset) / 2;
+        const centerPos = (maxOffset + minOffset) / 2;
+        const currentPos = centerPos + amplitude * Math.cos(shmPhase);
+
+        const p1X = centerX + currentPos; const m1X = centerX - currentPos;
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 12, centerY - 15);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 15);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(p1X, centerY); ctx.strokeStyle = 'rgba(88, 166, 255, 0.4)'; ctx.lineWidth = 2; ctx.stroke();
+
+        const o2Radius = 75;
+        const o2X = centerX + o2Radius * 0.4 * Math.cos(rotAngleO2); const o2Y = centerY - o2Radius * Math.sin(rotAngleO2);
+        const m2X = centerX - o2Radius * 0.4 * Math.cos(rotAngleO2); const m2Y = centerY + o2Radius * Math.sin(rotAngleO2);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(o2X, o2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', o2X + 8, o2Y + 4);
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 25, m2Y + 4);
+
+        const o3Radius = 85;
+        const cos3 = Math.cos(rotAngleO3); const sin3 = Math.sin(rotAngleO3);
+        const rx = o3Radius * cos3; const ry = o3Radius * 0.45 * sin3;
+        const cos45 = Math.cos(-Math.PI / 4); const sin45 = Math.sin(-Math.PI / 4);
+
+        const o3X = centerX + (rx * cos45 - ry * sin45); const o3Y = centerY + (rx * sin45 + ry * cos45);
+        const m3X = centerX - (rx * cos45 - ry * sin45); const m3Y = centerY - (rx * sin45 + ry * cos45);
+
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(o3X, o3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', o3X + 10, o3Y - 5);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 35, m3Y + 15);
+
+        ctx.beginPath(); ctx.moveTo(m1X, centerY); ctx.lineTo(o2X, o2Y); ctx.strokeStyle = 'rgba(240, 136, 62, 0.25)'; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p1X, centerY); ctx.lineTo(o2X, o2Y); ctx.strokeStyle = 'rgba(88, 166, 255, 0.25)'; ctx.lineWidth = 1; ctx.stroke();
+
+        shmPhase += 0.035 * speedFactor; rotAngleO2 += 0.025 * speedFactor; rotAngleO3 += 0.035 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 12) {
+        const gap = 10;
+        const outerLimit = 180;
+
+        const pX1 = centerX + outerLimit;
+        const px_minus1 = centerX + gap;
+        const mX1 = centerX - outerLimit;
+        const mx_minus1 = centerX - gap;
+
+        const pCenter = (pX1 + px_minus1) / 2;
+        const mCenter = (mX1 + mx_minus1) / 2;
+        const rotRadius = 60;
+
+        ctx.beginPath(); ctx.moveTo(mX1, centerY); ctx.lineTo(mx_minus1, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px_minus1, centerY); ctx.lineTo(pX1, centerY); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('ー', mX1 - 20, centerY + 5); ctx.fillText('ー', pX1 + 10, centerY + 5);
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(pCenter, centerY, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(mCenter, centerY, 4, 0, Math.PI * 2); ctx.fill();
+
+        const shmAmplitude = (outerLimit - gap) / 2;
+        const shmCenter = (outerLimit + gap) / 2;
+        const currentPos = shmCenter + shmAmplitude * Math.cos(shmPhase);
+
+        const p1X = centerX + currentPos;
+        const m1X = centerX - currentPos;
+
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const p2X = pCenter + rotRadius * Math.cos(rotAngleO2);
+        const p2Y = centerY + rotRadius * Math.sin(rotAngleO2);
+        const p3X = pCenter + rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const p3Y = centerY + rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const m2X = mCenter - rotRadius * Math.cos(rotAngleO2);
+        const m2Y = centerY - rotRadius * Math.sin(rotAngleO2);
+        const m3X = mCenter - rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const m3Y = centerY - rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(p1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O1', p1X - 10, centerY - 12);
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(m1X, centerY, 8, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O1', m1X - 15, centerY - 15);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2X, p2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2X + 8, p2Y + 4);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3X, p3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3X + 8, p3Y - 5);
+
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 28, m2Y + 4);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 28, m3Y - 5);
+
+        shmPhase += 0.035 * speedFactor; rotAngleO2 += 0.03 * speedFactor; rotAngleO3 += 0.04 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 13) {
+        const gap = 10;
+        const outerLimit = 180;
+
+        const pX1 = centerX + outerLimit;
+        const px_minus1 = centerX + gap;
+        const mX1 = centerX - outerLimit;
+        const mx_minus1 = centerX - gap;
+
+        const pCenter = (pX1 + px_minus1) / 2;
+        const mCenter = (mX1 + mx_minus1) / 2;
+        const lineHalfLength = (outerLimit - gap) / 2;
+        const rotRadius = 60;
+
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        ctx.save();
+        ctx.translate(pCenter, centerY);
+        ctx.rotate(axisRotAngle);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        const shmPos = lineHalfLength * Math.cos(shmPhase);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('+O1', shmPos - 10, -12);
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(mCenter, centerY);
+        ctx.rotate(-axisRotAngle);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(-shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('-O1', -shmPos - 12, -12);
+
+        ctx.restore();
+
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(pCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const p2X = pCenter + rotRadius * Math.cos(rotAngleO2);
+        const p2Y = centerY + rotRadius * Math.sin(rotAngleO2);
+        const p3X = pCenter + rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const p3Y = centerY + rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const m2X = mCenter - rotRadius * Math.cos(rotAngleO2);
+        const m2Y = centerY - rotRadius * Math.sin(rotAngleO2);
+        const m3X = mCenter - rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const m3Y = centerY - rotRadius * 1.3 * Math.sin(rotAngleO3);
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2X, p2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2X + 8, p2Y + 4);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3X, p3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3X + 8, p3Y - 5);
+
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 28, m2Y + 4);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 28, m3Y - 5);
+
+        shmPhase += 0.035 * speedFactor; rotAngleO2 += 0.03 * speedFactor; rotAngleO3 += 0.04 * speedFactor;
+        axisRotAngle += 0.015 * speedFactor;
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 14 || step === 15) {
+        const gap = 10;
+        const outerLimit = 180;
+
+        const pX1 = centerX + outerLimit;
+        const px_minus1 = centerX + gap;
+        const mX1 = centerX - outerLimit;
+        const mx_minus1 = centerX - gap;
+
+        const pCenter = (pX1 + px_minus1) / 2;
+        const mCenter = (mX1 + mx_minus1) / 2;
+        const lineHalfLength = (outerLimit - gap) / 2;
+        const rotRadius = 60;
+
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(centerX, centerY, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#8b949e'; ctx.font = 'bold 14px sans-serif'; ctx.fillText('0', centerX - 4, centerY + 22);
+
+        // --- 1. ＋x軸側の「ーー」の3次元自由回転表現 ---
+        ctx.save();
+        ctx.translate(pCenter, centerY);
+        ctx.rotate(axisRotAngle);
+        const scaleY1 = Math.cos(tiltAngle1);
+        ctx.scale(1, scaleY1);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        const shmPos = lineHalfLength * Math.cos(shmPhase);
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('+O1', shmPos - 10, -12);
+
+        ctx.restore();
+
+        // --- 2. －x軸側の「ーー」の3次元自由回転表現 ---
+        ctx.save();
+        ctx.translate(mCenter, centerY);
+        ctx.rotate(-axisRotAngle * 1.2);
+        const scaleY2 = Math.cos(tiltAngle2);
+        ctx.scale(1, scaleY2);
+
+        ctx.beginPath(); ctx.moveTo(-lineHalfLength, 0); ctx.lineTo(lineHalfLength, 0);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('ー', -lineHalfLength - 15, 5); ctx.fillText('ー', lineHalfLength + 5, 5);
+
+        ctx.fillStyle = '#f0883e'; ctx.beginPath(); ctx.arc(-shmPos, 0, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillText('-O1', -shmPos - 12, -12);
+
+        ctx.restore();
+
+        // --- 3. O2, O3 の立体同心円運動 ---
+        ctx.beginPath(); ctx.ellipse(pCenter, centerY, rotRadius, rotRadius * Math.abs(scaleY1), axisRotAngle, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(56, 212, 48, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(pCenter, centerY, rotRadius * 1.3, rotRadius * 1.3 * Math.abs(scaleY1), axisRotAngle, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(188, 140, 255, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const p2X = pCenter + rotRadius * Math.cos(rotAngleO2);
+        const p2Y = centerY + rotRadius * Math.sin(rotAngleO2) * scaleY1;
+        const p3X = pCenter + rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const p3Y = centerY + rotRadius * 1.3 * Math.sin(rotAngleO3) * scaleY1;
+
+        ctx.beginPath(); ctx.ellipse(mCenter, centerY, rotRadius, rotRadius * Math.abs(scaleY2), -axisRotAngle * 1.2, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(mCenter, centerY, rotRadius * 1.3, rotRadius * 1.3 * Math.abs(scaleY2), -axisRotAngle * 1.2, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+
+        const m2X = mCenter - rotRadius * Math.cos(rotAngleO2);
+        const m2Y = centerY - rotRadius * Math.sin(rotAngleO2) * scaleY2;
+        const m3X = mCenter - rotRadius * 1.3 * Math.cos(rotAngleO3);
+        const m3Y = centerY - rotRadius * 1.3 * Math.sin(rotAngleO3) * scaleY2;
+
+        ctx.fillStyle = '#38d430'; ctx.beginPath(); ctx.arc(p2X, p2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O2', p2X + 8, p2Y + 4);
+        ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(p3X, p3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('+O3', p3X + 8, p3Y - 5);
+
+        ctx.fillStyle = '#d29922'; ctx.beginPath(); ctx.arc(m2X, m2Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O2', m2X - 28, m2Y + 4);
+        ctx.fillStyle = '#f47067'; ctx.beginPath(); ctx.arc(m3X, m3Y, 6, 0, Math.PI*2); ctx.fill(); ctx.fillText('-O3', m3X - 28, m3Y - 5);
+
+        shmPhase += 0.035 * speedFactor;
+        rotAngleO2 += 0.03 * speedFactor;
+        rotAngleO3 += 0.04 * speedFactor;
+        axisRotAngle += 0.02 * speedFactor;
+        tiltAngle1 += 0.015 * speedFactor;
+        tiltAngle2 += 0.011 * speedFactor;
+
+        animId = requestAnimationFrame(draw);
+      }
     }
 
-    // クリック（またはタップ）でステップ進行
-    window.addEventListener('click', () => {
-      if (step === 0) {
-        step = 1;
+    window.addEventListener('click', (e) => {
+      if (e.target.closest('#controls')) return;
+
+      if (step < 15) {
+        step++;
+        updateText();
+        if (animId) cancelAnimationFrame(animId);
+        draw();
+      }
+    });
+
+    function updateText() {
+      if (step >= 8) {
+        controls.style.display = 'flex';
+      } else {
+        controls.style.display = 'none';
+      }
+
+      if (step === 1) {
         storyContainer.innerHTML = `
           <div style="font-size: 1.1rem; line-height: 2;">
             始まりは、何もない。<br>
@@ -202,20 +590,135 @@
             最初は境界もない。
           </div>
         `;
-      } else if (step === 1) {
-        step = 2;
+      } else if (step === 2) {
         storyContainer.innerHTML = `
           <div class="concept-title">直線の双極と円環宇宙論</div>
-          <div class="concept-subtitle">幾何学の極限構造から紐解くビッグバンとビッグクランチの同一性</div>
           <div class="concept-body">
-            <h3>1. 幾何学的基礎：直線の双極と閉じた空間</h3>
-            <p>球面幾何学において、一直線上に進み続ける運動は無限遠で反対側の極（双極）に達し、最終的に始点へと戻る大きな「円」を描きます。局所的な「直線」の概念は、大域的には「円周」として完成します。</p>
-            <h3>2. 宇宙創成への適用：時間とインフレーション</h3>
-            <p>時間の矢を1次元の「直線」として捉えた場合、始点である<b>ビッグバン</b>と終点である<b>ビッグクランチ</b>（または無限の収縮点）は同一の極として結ばれます。宇宙の誕生と終焉は独立した2点ではなく、1つの極限状態の表と裏です。</p>
+            <p>1. 幾何学的基礎：直線の双極と閉じた空間</p>
+            <p>2. 宇宙創成への適用：時間とインフレーション</p>
+          </div>
+        `;
+      } else if (step === 3) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">宇宙の始まり</div>
+          <div class="concept-body">
+            <p>在る無しの空間で、場があると場がないが生まれた。<br>誕生したのは双極の2つ（OO）である。</p>
+          </div>
+        `;
+      } else if (step === 4) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">線分の確立：＋O1 と 0 と －O1</div>
+          <div class="concept-body"><p>－O1 と 0 と ＋O1 の間に直線 「ーー」 が結ばれる。</p></div>
+        `;
+      } else if (step === 5) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">直交極 ＋O2 / ＋O3</div>
+          <div class="concept-body"><p>＋O1と－O1に直交して ＋O2、さらに直交して ＋O3 が誕生する。</p></div>
+        `;
+      } else if (step === 6) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">負の直交双極：－O2 / －O3</div>
+          <div class="concept-body"><p>－O1 からも －O2, －O3 が誕生している。</p></div>
+        `;
+      } else if (step === 7) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O1と0からの直線「ー」の伸張</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              －O1 と 0 と ＋O1 から「ー」の線を外側へと伸ばし、先端に「ー」を配置する。
+            </p>
+          </div>
+        `;
+      } else if (step === 8) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">運動の開始：軸の拘束と O1 の引き合い</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>軸は固定され、0点で分断（切れ目）されている。</b><br>
+              ＋O1 と －O1 は軸上に拘束されたまま、<br>
+              最初の<b>「引き合う運動」</b>を始める。
+            </p>
+          </div>
+        `;
+      } else if (step === 9) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O2 の円運動：押され引き寄せられる力学</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>O2 は円運動を始める。</b><br>
+              <b>－O1</b> に押され（反発）、<b>＋O1</b> に引かれ（引力）、<br>
+              直線軸 <b>「ー」</b> を中心に回転運動を開始する。
+            </p>
+          </div>
+        `;
+      } else if (step === 10) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O3 の周回連動：立体連動場の確立</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>O3 もまわる。</b><br>
+              O2 に続き、<b>O3</b>（および <b>－O3</b>）も極性の力を受けて回転運動を開始。<br>
+              固定軸「ー」の周りで全方位的な幾何学回転場が成立する。
+            </p>
+          </div>
+        `;
+      } else if (step === 11) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">O1 の単振動運動：力学の原点</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>O1 は ーー 上を単振動する。</b><br>
+              ＋O1 と －O1 は、固定軸「ーー」の上を完全に拘束されたまま往復運動（単振動）し、<br>
+              その共振エネルギーが O2 や O3 の回転場を駆動する。
+            </p>
+          </div>
+        `;
+      } else if (step === 12) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">－O2 を中心とする幾何学回転構造</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>＋O2 が回るときの中心は ＋X1 と ＋x-1 の中心。</b><br>
+              <b>－x軸側の －X1 と －x-1 の中心が －O2（回転中心）となる。</b><br>
+              <b>＋O1 / －O1 の振幅は x-1 ～ X1 の「ーー」区間内。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 13) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">二重軸回転：ーー 自体の中心回転</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>＋x軸と －x軸の「ーー」自体もそれぞれの中心で回転する。</b><br>
+              回転する「ーー」の上を O1 が単振動しながら、<br>
+              O2, O3 がその中心を周回する複合宇宙力学モデルが成立する。
+            </p>
+          </div>
+        `;
+      } else if (step === 14) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">動的平衡宇宙：全方位3次元自由回転の成立</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>「ーー」の中心から「ーー」は平面拘束されていない、自由回転である。</b><br>
+              原点0、回転する軸線「ーー」、単振動する O1、周回する O2/O3。<br>
+              <b>4つのものが強固な関係性を持ち、無限に動き続ける。</b>
+            </p>
+          </div>
+        `;
+      } else if (step === 15) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">双極球体の完成：二丸の創成</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>最後に O の軌道を塗りつぶせば、2つの球（双極球体）が完成する。</b><br>
+              全方位へ回転・振動を重ねた点と軸線の運動密度が充満し、<br>
+              原点0を挟んだふたつの安定した実体球が形成された。
+            </p>
           </div>
         `;
       }
-    });
+    }
 
     draw();
   </script>
