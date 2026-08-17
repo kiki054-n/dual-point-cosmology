@@ -180,7 +180,7 @@
     const stepSelect = document.getElementById('step-select');
 
     let step = 0;
-    const maxStep = 31;
+    const maxStep = 34;
     let speedFactor = 1.5;
     let zRotationAngle = 0;
 
@@ -216,7 +216,10 @@
       "Step 28: 225要素の粒子創成 (3x3x5x5調和)",
       "Step 29: 37の質量変換と225要素空間の完結",
       "Step 30: 第6世代（6x6x6 216マス/486個/質量1〜2）",
-      "Step 31: 第7世代（原子・素粒子の誕生 / 軌道モデル添付）"
+      "Step 31: 第7世代（原子・素粒子の誕生 / 軌道モデル添付）",
+      "Step 32: 第8世代（8x8x8 512マス/4374個/質量1〜4）",
+      "Step 33: 第9世代（9x9x9 729マス/13122個/質量1〜5）",
+      "Step 34: 第10世代（10x10x10 1000マス/39366個/大宇宙調和）"
     ];
 
     stepTitles.forEach((title, index) => {
@@ -300,8 +303,8 @@
       const halfSize = cubeSize / 2;
       const stepS = cubeSize / gridCount;
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      ctx.lineWidth = 0.8;
 
       for (let i = 0; i <= gridCount; i++) {
         ctx.beginPath();
@@ -314,6 +317,64 @@
         ctx.lineTo(centerX + halfSize, centerY - halfSize + i * stepS);
         ctx.stroke();
       }
+    }
+
+    function drawGenerationalGrid(gridCount, totalOOPIO, maxMass, label) {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const cubeSize = 330;
+      drawGrid(gridCount, cubeSize);
+
+      const halfSize = cubeSize / 2;
+      const mainR = 130;
+      const subCount = Math.min(36, gridCount * 4); // 描画表現用サンプルノード数
+
+      bipyramidRot += 0.02 * speedFactor;
+
+      for (let i = 0; i < subCount; i++) {
+        const ang = bipyramidRot + (i * Math.PI * 2) / subCount;
+        const px = centerX + mainR * Math.cos(ang);
+        const py = centerY + mainR * 0.6 * Math.sin(ang);
+
+        ctx.fillStyle = i % 3 === 0 ? 'rgba(255, 215, 0, 0.85)' : (i % 2 === 0 ? 'rgba(88, 166, 255, 0.8)' : 'rgba(240, 136, 62, 0.8)');
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 1〜maxMass 個の質量化要素のドット配置
+        ctx.fillStyle = '#ffffff';
+        const currentMass = (i % maxMass) + 1;
+        for (let m = 0; m < currentMass; m++) {
+          const mAng = (m * Math.PI * 2) / currentMass;
+          const mx = px + 2.5 * Math.cos(mAng);
+          const my = py + 2.5 * Math.sin(mAng);
+          ctx.beginPath();
+          ctx.arc(mx, my, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(centerX, centerY);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 16, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText(label, centerX - 180, centerY + halfSize + 25);
     }
 
     function draw() {
@@ -668,7 +729,7 @@
         const p2X = pCenter + rotRadius * Math.cos(rotAngleO2);
         const p2Y = centerY + rotRadius * Math.sin(rotAngleO2);
         const p3X = pCenter + rotRadius * 1.3 * Math.cos(rotAngleO3);
-        const p3Y = pCenter + rotRadius * 1.3 * Math.sin(rotAngleO3);
+        const p3Y = centerY + rotRadius * 1.3 * Math.sin(rotAngleO3);
 
         ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(210, 153, 34, 0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke();
         ctx.beginPath(); ctx.arc(mCenter, centerY, rotRadius * 1.3, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(244, 112, 103, 0.3)'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
@@ -1660,6 +1721,30 @@
 
         animId = requestAnimationFrame(draw);
       }
+      else if (step === 32) {
+        // Step 32: 第8世代 (8x8x8 512マス / 1458x3=4374個のOOπO / 質量化要素1〜4個)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawGenerationalGrid(8, 4374, 4, '第8世代: 8x8x8 (512マス) ｜ 4374個の OOπO ｜ 質量化要素 1〜4個');
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 33) {
+        // Step 33: 第9世代 (9x9x9 729マス / 4374x3=13122個のOOπO / 質量化要素1〜5個)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawGenerationalGrid(9, 13122, 5, '第9世代: 9x9x9 (729マス) ｜ 13122個の OOπO ｜ 質量化要素 1〜5個');
+        animId = requestAnimationFrame(draw);
+      }
+      else if (step === 34) {
+        // Step 34: 第10世代 (10x10x10 1000マス / 13122x3=39366個のOOπO / 質量化要素1〜6個 / 大宇宙調和)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawGenerationalGrid(10, 39366, 6, '第10世代: 10x10x10 (1000マス) ｜ 39366個の OOπO ｜ 質量化要素 1〜6個 ｜ 大宇宙調和の完結');
+        animId = requestAnimationFrame(draw);
+      }
     }
 
     function updateText() {
@@ -1963,7 +2048,7 @@
           <div class="concept-title">第6世代の結合：6x6x6(216マス)と486個の OOπO</div>
           <div class="concept-body">
             <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
-              <b>6世代では 6x6x6 の 216マスの中に 162 x 3 ＝ 486 が一つの空間になる。</b><br><br>
+              <b>6世代では 6x6x6 の 216マスの中に 162 x 3 ＝ 486 が一つの空間になる。</b><br>
               <b>O の中に OπO と、OπO の大きさと同じで質量となったものが1つ以上2つまで。</b>
             </p>
           </div>
@@ -1973,14 +2058,48 @@
           <div class="concept-title">第7世代と物質の創成：原子・素粒子の結晶</div>
           <div class="concept-body">
             <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
-              <b>7世代では 7x7x7 の 343のマスの中に 1458 が存在できる空間になる。</b><br><br>
-              <b>O の中に OπO と、OπO の大きさと同じで質量となったものが1つ以上3つまで。</b><br><br>
+              <b>7世代では 7x7x7 の 343のマスの中に 1458 が存在できる空間になる。</b><br>
+              <b>O の中に OπO と、OπO の大きさと同じで質量となったものが1つ以上3つまで。</b><br>
               <b>その組み合わせの中で原子や素粒子になっていった。</b>
             </p>
             <div class="orbital-image-box">
               <img src="image_agent_tag_4468413590975017117" alt="立体格子の幾何学調和（原子軌道モデル）">
               <div class="orbital-caption">立体格子の幾何学調和（原子軌道モデル）<br>ソース: Anna Zlamana / Getty Images</div>
             </div>
+          </div>
+        `;
+      } else if (step === 32) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第8世代の進化：8x8x8(512マス)と4374個の OOπO</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>8世代では 8x8x8 の 512マスの中に 1458 x 3 ＝ 4374 の空間が展開する。</b><br><br>
+              <b>O の中に OπO と、同サイズで質量となったものが1つ以上4つまで結合。</b><br>
+              高密度な重量子軌道場が形成され、重元素の素粒子構造が安定化する。
+            </p>
+          </div>
+        `;
+      } else if (step === 33) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第9世代の自己増殖：9x9x9(729マス)と13122個の OOπO</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>9世代では 9x9x9 の 729マスの中に 4374 x 3 ＝ 13122 が存在できる空間になる。</b><br><br>
+              <b>O の中に OπO と、同サイズで質量となったものが1つ以上5つまで結合。</b><br>
+              多重重力場と分子軌道の基礎をなす複雑な複合幾何学結合が成就する。
+            </p>
+          </div>
+        `;
+      } else if (step === 34) {
+        storyContainer.innerHTML = `
+          <div class="concept-title">第10世代の大宇宙調和：10x10x10(1000マス)と39366個の OOπO</div>
+          <div class="concept-body">
+            <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+              <b>10世代では 10x10x10 の 1000マスの中に 13122 x 3 ＝ 39366 が調和する大宇宙空間になる。</b><br><br>
+              <b>O の中に OπO と、同サイズで質量となったものが1つ以上6つまで結合。</b><br><br>
+              ミクロな「無」と「双極」の原理から発した運動体系は、<br>
+              巨視的物質場（大宇宙）としての完全なる幾何学調和構造へ完結・定着した。
+            </p>
           </div>
         `;
       }
