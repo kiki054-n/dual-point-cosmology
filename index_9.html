@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>直線の双極と円環宇宙論 — Cosmic Creation</title>
+<style>
+  :root{
+    --bg:#05060d;
+    --bg2:#0c1024;
+    --panel:rgba(15,17,32,0.78);
+    --panel-border:rgba(140,150,220,0.18);
+    --gold:#f0b25e;
+    --gold-bright:#ffd9a0;
+    --cyan:#5ec8f0;
+    --cyan-bright:#a6e8ff;
+    --violet:#b98cf2;
+    --text:#e8e8f5;
+    --muted:#9aa3c4;
+    --line:rgba(154,163,196,0.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",-apple-system,BlinkMacSystemFont,sans-serif;
+    overflow:hidden;
+  }
+  #app{
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+    height:100dvh;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:12px 20px;
+    background:linear-gradient(180deg, rgba(12,14,28,0.95), rgba(12,14,28,0.75));
+    border-bottom:1px solid var(--panel-border);
+    flex-wrap:wrap;
+    z-index:5;
+  }
+  header h1{
+    font-size:15px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:0.02em;
+    white-space:nowrap;
+  }
+  header h1 .sub{
+    display:block;
+    font-size:10.5px;
+    font-weight:400;
+    color:var(--muted);
+    letter-spacing:0.12em;
+    margin-top:2px;
+  }
+  .stepnav{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:inherit;
+    background:rgba(255,255,255,0.06);
+    color:var(--text);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:7px 14px;
+    font-size:13px;
+    cursor:pointer;
+    transition:background 0.15s, border-color .15s;
+  }
+  button:hover:not(:disabled){ background:rgba(255,255,255,0.13); border-color:rgba(240,178,94,0.5); }
+  button:disabled{ opacity:0.35; cursor:default; }
+  select{
+    font-family:inherit;
+    background:rgba(255,255,255,0.06);
+    color:var(--text);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:7px 10px;
+    font-size:12.5px;
+    max-width:46vw;
+  }
+  main{
+    flex:1;
+    display:flex;
+    min-height:0;
+  }
+  #stageWrap{
+    position:relative;
+    flex:1 1 auto;
+    min-width:0;
+  }
+  canvas#stage{
+    display:block;
+    width:100%;
+    height:100%;
+    touch-action:none;
+    cursor:grab;
+  }
+  canvas#stage:active{ cursor:grabbing; }
+  #dragHint{
+    position:absolute;
+    left:14px;
+    bottom:12px;
+    font-size:11px;
+    color:var(--muted);
+    background:rgba(8,9,18,0.5);
+    padding:4px 9px;
+    border-radius:6px;
+    pointer-events:none;
+    letter-spacing:0.03em;
+  }
+  #phaseBadge{
+    position:absolute;
+    top:14px;
+    left:14px;
+    font-size:11px;
+    color:var(--muted);
+    background:rgba(8,9,18,0.5);
+    padding:5px 10px;
+    border-radius:6px;
+    pointer-events:none;
+    letter-spacing:0.04em;
+  }
+  aside#panel{
+    width:360px;
+    flex:0 0 360px;
+    background:var(--panel);
+    border-left:1px solid var(--panel-border);
+    padding:20px 22px 16px;
+    overflow-y:auto;
+    backdrop-filter:blur(6px);
+  }
+  .stepBadge{
+    display:inline-block;
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:var(--bg);
+    background:linear-gradient(120deg, var(--gold), var(--gold-bright));
+    padding:3px 10px;
+    border-radius:999px;
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  #stepTitle{
+    font-size:18px;
+    margin:0 0 12px;
+    line-height:1.4;
+    color:var(--gold-bright);
+    font-weight:700;
+  }
+  #stepDesc{
+    font-size:13.4px;
+    line-height:1.85;
+    color:var(--text);
+    white-space:pre-line;
+    margin:0 0 18px;
+  }
+  .controls{ display:flex; flex-direction:column; gap:14px; margin-bottom:18px; }
+  .ctrl{
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    padding:10px 12px;
+  }
+  .ctrl label{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .ctrl label b{ color:var(--cyan-bright); font-weight:600; }
+  input[type=range]{
+    width:100%;
+    accent-color:var(--gold);
+  }
+  #phaseTrack{
+    display:flex;
+    gap:3px;
+    margin-top:6px;
+  }
+  #phaseTrack .seg{
+    flex:1;
+    height:5px;
+    border-radius:3px;
+    background:rgba(255,255,255,0.08);
+  }
+  #phaseTrack .seg.done{ background:linear-gradient(90deg, var(--cyan), var(--gold)); }
+  #phaseTrack .seg.current{ background:var(--gold-bright); box-shadow:0 0 8px var(--gold); }
+  .phaseLabel{ font-size:10.5px; color:var(--muted); margin-top:6px; letter-spacing:.02em; }
+  footer{
+    text-align:center;
+    font-size:10.5px;
+    color:var(--muted);
+    padding:8px 10px 12px;
+    border-top:1px solid var(--panel-border);
+    letter-spacing:0.02em;
+  }
+  @media (max-width: 860px){
+    main{ flex-direction:column; }
+    aside#panel{ width:100%; flex:0 0 auto; max-height:42vh; border-left:none; border-top:1px solid var(--panel-border); }
+    #stageWrap{ flex:1 1 50vh; }
+    header h1{ font-size:13px; }
+    select{ max-width:100%; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>直線の双極と円環宇宙論<span class="sub">COSMIC CREATION — TTT UNIVERSE GENESIS MODEL</span></h1>
+    <div class="stepnav">
+      <button id="btnPrev">← 戻る</button>
+      <select id="stepSelect" aria-label="ステップ選択"></select>
+      <button id="btnNext">次へ →</button>
+    </div>
+  </header>
+  <main>
+    <div id="stageWrap">
+      <canvas id="stage"></canvas>
+      <div id="phaseBadge">Phase 1 — 幾何学の萌芽</div>
+      <div id="dragHint">ドラッグで視点回転 ・ ダブルクリックで自動回転再開</div>
+    </div>
+    <aside id="panel">
+      <span class="stepBadge">STEP <span id="stepNum">0</span> / 31</span>
+      <h2 id="stepTitle"></h2>
+      <p id="stepDesc"></p>
+      <div class="controls">
+        <div class="ctrl" id="speedCtrl">
+          <label>運動速度 <b><span id="speedVal">1.00x</span></b></label>
+          <input type="range" id="speedSlider" min="0" max="3" step="0.05" value="1">
+        </div>
+        <div class="ctrl" id="rotCtrl" style="display:none">
+          <label>Z軸回転（原点 0 中心）<b><span id="rotVal">0°</span></b></label>
+          <input type="range" id="rotSlider" min="0" max="360" step="1" value="0">
+        </div>
+      </div>
+      <div id="phaseTrack"></div>
+      <div class="phaseLabel" id="phaseLabel"></div>
+    </aside>
+  </main>
+  <footer>本モデルは独自理論（TTT: Tri-Tetra Theory）に基づく思考実験的な幾何学ビジュアライゼーションです。単一 HTML ファイルでオフライン動作します。</footer>
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   Canvas / DPI
+============================================================ */
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+let W=1,H=1;
+
+function resize(){
+  const rect = canvas.getBoundingClientRect();
+  const DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = Math.max(1, Math.floor(rect.width));
+  H = Math.max(1, Math.floor(rect.height));
+  canvas.width = Math.floor(W*DPR);
+  canvas.height = Math.floor(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize', resize);
+
+/* ============================================================
+   Starfield background
+============================================================ */
+let stars = [];
+(function makeStars(){
+  const n = 240;
+  for(let i=0;i<n;i++){
+    stars.push({x:Math.random(), y:Math.random(), r:Math.random()*1.3+0.25, a:Math.random()*0.55+0.15, tw:Math.random()*Math.PI*2});
+  }
+})();
+
+function drawBackground(t){
+  const g = ctx.createRadialGradient(W*0.5,H*0.4,0, W*0.5,H*0.5, Math.max(W,H)*0.8);
+  g.addColorStop(0,'#0d1128');
+  g.addColorStop(0.55,'#080a18');
+  g.addColorStop(1,'#020207');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+  for(const s of stars){
+    const a = s.a * (0.55+0.45*Math.sin(t*0.0011+s.tw));
+    ctx.fillStyle = 'rgba(200,215,255,'+a.toFixed(3)+')';
+    ctx.beginPath();
+    ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+}
+
+/* ============================================================
+   Vec3 + rotation
+============================================================ */
+function V(x,y,z){ return {x:x,y:y,z:z}; }
+const Vec3 = {
+  add:(a,b)=>V(a.x+b.x,a.y+b.y,a.z+b.z),
+  sub:(a,b)=>V(a.x-b.x,a.y-b.y,a.z-b.z),
+  scale:(a,s)=>V(a.x*s,a.y*s,a.z*s),
+  lerp:(a,b,t)=>V(a.x+(b.x-a.x)*t, a.y+(b.y-a.y)*t, a.z+(b.z-a.z)*t),
+};
+function rotX(p,a){ const c=Math.cos(a),s=Math.sin(a); return V(p.x, p.y*c-p.z*s, p.y*s+p.z*c); }
+function rotY(p,a){ const c=Math.cos(a),s=Math.sin(a); return V(p.x*c+p.z*s, p.y, -p.x*s+p.z*c); }
+function rotZ(p,a){ const c=Math.cos(a),s=Math.sin(a); return V(p.x*c-p.y*s, p.x*s+p.y*c, p.z); }
+
+/* ============================================================
+   Camera + projection
+============================================================ */
+const camera = { ay: 0.55, ax: -0.30, dragging:false, lastX:0, lastY:0, auto:true, vx:0.055 };
+let extraZRot = 0; // Step16 slider
+let BASE = 70;
+const DIST = 6.4, FOCAL = 6.4;
+
+function project(p){
+  let q = rotZ(p, extraZRot);
+  q = rotY(q, camera.ay);
+  q = rotX(q, camera.ax);
+  const f = FOCAL/(DIST - q.z);
+  return { x: W/2 + q.x*BASE*f, y: H/2 - q.y*BASE*f, depth:q.z, f:f };
+}
+
+canvas.addEventListener('pointerdown', e=>{
+  camera.dragging=true; camera.lastX=e.clientX; camera.lastY=e.clientY; camera.auto=false;
+  try{ canvas.setPointerCapture(e.pointerId); }catch(err){}
+});
+canvas.addEventListener('pointermove', e=>{
+  if(!camera.dragging) return;
+  const dx=e.clientX-camera.lastX, dy=e.clientY-camera.lastY;
+  camera.ay += dx*0.006; camera.ax += dy*0.006;
+  camera.ax = Math.max(-1.4, Math.min(1.4, camera.ax));
+  camera.lastX=e.clientX; camera.lastY=e.clientY;
+});
+window.addEventListener('pointerup', ()=>{ camera.dragging=false; });
+canvas.addEventListener('dblclick', ()=>{ camera.auto = true; });
+
+/* ============================================================
+   Depth-sorted draw queue
+============================================================ */
+let queue = [];
+function resetQ(){ queue = []; }
+function push(depth, fn){ queue.push({depth:depth, fn:fn}); }
+function flushQ(){
+  queue.sort((a,b)=>a.depth-b.depth);
+  for(let i=0;i<queue.length;i++) queue[i].fn();
+}
+
+function dot(p, r, color, alpha, glow){
+  alpha = alpha===undefined?1:alpha;
+  const s = project(p);
+  const rr = Math.max(0.5, r*s.f);
+  push(s.depth, function(){
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if(glow){
+      const grad = ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,rr*3.2);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(s.x,s.y,rr*3.2,0,Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(s.x,s.y,rr,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+}
+
+function line(p1,p2,color,width,alpha,dash){
+  width = width===undefined?1.5:width;
+  alpha = alpha===undefined?1:alpha;
+  const s1=project(p1), s2=project(p2);
+  const depth=(s1.depth+s2.depth)/2;
+  push(depth, function(){
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.strokeStyle=color;
+    ctx.lineWidth = Math.max(0.4, width*((s1.f+s2.f)/2));
+    ctx.setLineDash(dash||[]);
+    ctx.beginPath(); ctx.moveTo(s1.x,s1.y); ctx.lineTo(s2.x,s2.y); ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function circle3(center, radius, axis, color, width, alpha, segments){
+  width = width===undefined?1.4:width;
+  alpha = alpha===undefined?0.85:alpha;
+  segments = segments||56;
+  const pts=[];
+  for(let i=0;i<=segments;i++){
+    const a=(i/segments)*Math.PI*2;
+    let p;
+    if(axis==='z') p=V(Math.cos(a)*radius, Math.sin(a)*radius, 0);
+    else if(axis==='x') p=V(0, Math.cos(a)*radius, Math.sin(a)*radius);
+    else p=V(Math.sin(a)*radius, 0, Math.cos(a)*radius);
+    pts.push(Vec3.add(center,p));
+  }
+  const cs = project(center);
+  push(cs.depth, function(){
+    ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath();
+    for(let i=0;i<pts.length;i++){
+      const s = project(pts[i]);
+      if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
+    }
+    ctx.stroke(); ctx.restore();
+  });
+}
+
+function label(p, text, color, size, alpha){
+  size = size||12; alpha = alpha===undefined?0.9:alpha;
+  const s = project(p);
+  push(s.depth+0.001, function(){
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.font = (size*Math.min(1.5,Math.max(0.6,s.f)))+'px "Hiragino Sans", sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(text, s.x, s.y-size*1.2);
+    ctx.restore();
+  });
+}
+
+function hud(lines){
+  ctx.save();
+  ctx.globalAlpha=0.82;
+  ctx.font='11.5px "Hiragino Sans", sans-serif';
+  ctx.textAlign='right'; ctx.textBaseline='top';
+  let y = 14;
+  for(const l of lines){
+    ctx.fillStyle = l.color || '#9aa3c4';
+    ctx.fillText(l.text, W-14, y);
+    y += 17;
+  }
+  ctx.restore();
+}
+
+/* sphere point cloud (fibonacci distribution) */
+function fibSphere(n, radius, center){
+  const pts=[];
+  const offset = 2/n;
+  const inc = Math.PI*(3-Math.sqrt(5));
+  for(let i=0;i<n;i++){
+    const y = ((i*offset)-1)+(offset/2);
+    const r = Math.sqrt(Math.max(0,1-y*y));
+    const phi = i*inc;
+    const x = Math.cos(phi)*r, z = Math.sin(phi)*r;
+    pts.push(Vec3.add(center||V(0,0,0), V(x*radius, y*radius, z*radius)));
+  }
+  return pts;
+}
+
+/* wireframe lattice cube: n x n x n cells, drawn as gridded outer faces + bold edges */
+function latticeCube(n, cell, color, alpha, boldAlpha){
+  alpha = alpha===undefined?0.28:alpha;
+  boldAlpha = boldAlpha===undefined?0.75:boldAlpha;
+  const half = n*cell/2;
+  const faceAt = [-half];
+  for(const val of faceAt){
+    for(let i=0;i<=n;i++){
+      const t = -half + i*cell;
+      line(V(val,t,-half),V(val,t,half), color,1,alpha);
+      line(V(val,-half,t),V(val,half,t), color,1,alpha);
+      line(V(t,val,-half),V(t,val,half), color,1,alpha);
+      line(V(-half,val,t),V(half,val,t), color,1,alpha);
+      line(V(t,-half,val),V(t,half,val), color,1,alpha);
+      line(V(-half,t,val),V(half,t,val), color,1,alpha);
+    }
+  }
+  const cs=[-half,half], corners=[];
+  for(const x of cs) for(const y of cs) for(const z of cs) corners.push(V(x,y,z));
+  for(let i=0;i<8;i++) for(let j=i+1;j<8;j++){
+    const a=corners[i], b=corners[j];
+    const diff=(a.x!==b.x?1:0)+(a.y!==b.y?1:0)+(a.z!==b.z?1:0);
+    if(diff===1) line(a,b,color,2.1,boldAlpha);
+  }
+  return half;
+}
+
+/* jittered lattice-interior sample points for particle placement */
+function latticeParticles(n, cell, count, seedBase){
+  const half = n*cell/2;
+  const pts=[];
+  for(let i=0;i<count;i++){
+    const u = pseudo(seedBase+i*3.11), v = pseudo(seedBase+i*3.11+1), w = pseudo(seedBase+i*3.11+2);
+    pts.push(V((u*2-1)*half*0.94, (v*2-1)*half*0.94, (w*2-1)*half*0.94));
+  }
+  return pts;
+}
+function pseudo(n){ const x = Math.sin(n*12.9898)*43758.5453; return x - Math.floor(x); }
+
+/* ============================================================
+   Palette
+============================================================ */
+const COL = {
+  pos:'#f0b25e', posBright:'#ffe0ad',
+  neg:'#5ec8f0', negBright:'#bdeeff',
+  pi:'#b98cf2', piBright:'#ddc4ff',
+  mass:'#f5f3ff',
+  frozen:'#7d84a0',
+  free:'#f0b25e',
+  axis:'#5b6690',
+  space:'#3a4a7a',
+  white:'#e8e8f5'
+};
+
+/* ============================================================
+   State
+============================================================ */
+const state = { step:0, t:0, speed:1, lastTs:0 };
+
+/* ============================================================
+   Scene builders shared across steps
+============================================================ */
+
+// Phase1: progressive axis construction. stage 0..7 (mirrors step number for steps 0-7)
+function sceneAxes(stage, t){
+  resetQ();
+  const pulse = 1+0.03*Math.sin(t*0.0016);
+
+  if(stage<=0){
+    // Step0: nothing — just a faint breathing void marker
+    ctx.save();
+    ctx.globalAlpha = 0.08+0.05*Math.sin(t*0.0009);
+    ctx.fillStyle = '#26305c';
+    ctx.beginPath(); ctx.arc(W/2,H/2, Math.min(W,H)*0.08, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  if(stage===1){
+    // Step1: bipolar field split — two half planes divided by a boundary
+    const cx=W/2, cy=H/2;
+    const g1 = ctx.createLinearGradient(0,0,W,0);
+    g1.addColorStop(0,'rgba(94,200,240,0.16)');
+    g1.addColorStop(0.5,'rgba(94,200,240,0.02)');
+    ctx.fillStyle=g1; ctx.fillRect(0,0,W/2,H);
+    const g2 = ctx.createLinearGradient(W,0,0,0);
+    g2.addColorStop(0,'rgba(240,178,94,0.16)');
+    g2.addColorStop(0.5,'rgba(240,178,94,0.02)');
+    ctx.fillStyle=g2; ctx.fillRect(W/2,0,W/2,H);
+    ctx.save();
+    ctx.globalAlpha = 0.55+0.2*Math.sin(t*0.0025);
+    ctx.strokeStyle = '#e8e8f5';
+    ctx.lineWidth=1.4;
+    ctx.setLineDash([2,6]);
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  if(stage===2){
+    // Step2: geometry primer — point, segment, closed circle (flat 2D diagram)
+    const cy=H*0.5;
+    ctx.save();
+    ctx.strokeStyle='#8fe3ff'; ctx.fillStyle='#8fe3ff'; ctx.lineWidth=1.6; ctx.globalAlpha=0.9;
+    // point
+    const px=W*0.22;
+    ctx.beginPath(); ctx.arc(px,cy,4,0,Math.PI*2); ctx.fill();
+    ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.fillText('点',px,cy+26);
+    // segment
+    ctx.strokeStyle='#ffe0ad'; ctx.fillStyle='#ffe0ad';
+    ctx.beginPath(); ctx.moveTo(W*0.40,cy); ctx.lineTo(W*0.58,cy); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W*0.40,cy,3.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(W*0.58,cy,3.4,0,Math.PI*2); ctx.fill();
+    ctx.fillText('線分',W*0.49,cy+26);
+    // closed circle (loops back on itself)
+    ctx.strokeStyle='#ddc4ff';
+    const r=Math.min(W,H)*0.09, ccx=W*0.78;
+    ctx.beginPath(); ctx.arc(ccx,cy,r,-t*0.0009,Math.PI*2-t*0.0009); ctx.stroke();
+    ctx.fillStyle='#ddc4ff'; ctx.fillText('閉じた円環',ccx,cy+r+20);
+    ctx.restore();
+    return;
+  }
+
+  // stage>=3 : 3D axis system
+  const O1 = 1.55 + (stage>=7?0.55:0);
+  const bg = drawBackground; // noop reference kept for clarity
+  const showMain = stage>=3;
+  const showSeg = stage>=4;
+  const showPos23 = stage>=5;
+  const showNeg23 = stage>=6;
+  const extend = stage>=7;
+
+  if(stage===3){
+    // Step3: the first dipole OO forming at origin (before axis exists)
+    const sep = 0.9*(0.4+0.6*Math.min(1,(t%2600)/2600));
+    dot(V(-sep,0,0), 9, COL.neg, 1, true);
+    dot(V(sep,0,0), 9, COL.pos, 1, true);
+    line(V(-sep,0,0),V(sep,0,0), COL.white, 1, 0.35, [1,5]);
+    label(V(-sep,0,0), '-OO', COL.negBright, 13);
+    label(V(sep,0,0), '+OO', COL.posBright, 13);
+    flushQ();
+    return;
+  }
+
+  if(showSeg){
+    line(V(-O1,0,0),V(O1,0,0), COL.axis, 2, 0.85);
+    dot(V(-O1,0,0), 8, COL.neg, 1, true);
+    dot(V(O1,0,0), 8, COL.pos, 1, true);
+    dot(V(0,0,0), 4.5, COL.white, 0.9, true);
+    label(V(-O1,0,0), '-O1', COL.negBright, 13);
+    label(V(O1,0,0), '+O1', COL.posBright, 13);
+    label(V(0,0,0), '0', COL.white, 12);
+  }
+  if(showPos23){
+    const L = extend?2.05:1.35;
+    line(V(0,0,0),V(0,L,0), COL.axis, 2, 0.85);
+    line(V(0,0,0),V(0,0,L), COL.axis, 2, 0.85);
+    dot(V(0,L,0), 7.5, COL.pos, 1, true);
+    dot(V(0,0,L), 7.5, COL.pos, 0.85, true);
+    label(V(0,L,0), '+O2', COL.posBright, 12);
+    label(V(0,0,L), '+O3', COL.posBright, 12);
+  }
+  if(showNeg23){
+    const L = extend?2.05:1.35;
+    line(V(-O1,0,0),V(-O1,-L*0.55,0), COL.axis, 2, 0.85);
+    line(V(-O1,0,0),V(-O1,0,-L*0.55), COL.axis, 2, 0.85);
+    dot(V(-O1,-L*0.55,0), 7, COL.neg, 1, true);
+    dot(V(-O1,0,-L*0.55), 7, COL.neg, 0.85, true);
+    label(V(-O1,-L*0.55,0), '-O2', COL.negBright, 12);
+    label(V(-O1,0,-L*0.55), '-O3', COL.negBright, 12);
+  }
+  flushQ();
+}
+
+// Phase2: 8-14 dynamic pole system, 15 orbit-fill, 16 first generation
+function scenePoles(level, t, zSlider){
+  resetQ();
+  extraZRot = zSlider||0;
+  const w = t*0.0016*state.speed;
+
+  // O1 base oscillation (levels 8+)
+  const osc = level>=11 ? 0.55*Math.sin(w*2.2) : (level>=8? 0.28*Math.sin(w*1.3):0);
+  const O1p = 1.55 - osc*0.35;
+  const O1n = -1.55 + osc*0.35;
+
+  line(V(O1n,0,0),V(O1p,0,0), COL.axis, 2, 0.7);
+  dot(V(O1p,0,0), 8, COL.pos, 1, true);
+  dot(V(O1n,0,0), 8, COL.neg, 1, true);
+  dot(V(0,0,0), 4, COL.white, 0.85, true);
+  label(V(O1p,0,0), '+O1', COL.posBright, 12);
+  label(V(O1n,0,0), '-O1', COL.negBright, 12);
+
+  // O2/O3 orbit around O1 centers once level>=9
+  function orbiter(centerX, phase, active, radius, colr, colrBright, tag){
+    if(!active){
+      dot(V(centerX,0,0), 3, colr, 0.25);
+      return;
+    }
+    const a = w*2.6+phase;
+    const p = V(centerX, Math.cos(a)*radius, Math.sin(a)*radius);
+    if(level>=13){
+      // double-axis self rotation adds secondary spin
+      const a2 = w*4.1+phase*1.7;
+      const spin = V(0, Math.cos(a2)*radius*0.28, Math.sin(a2)*radius*0.28);
+      p.y+=spin.y; p.z+=spin.z;
+    }
+    circle3(V(centerX,0,0), radius, 'x', colr, 1.1, 0.28);
+    dot(p, 6, colr, 1, true);
+    label(p, tag, colrBright, 11, 0.85);
+  }
+  orbiter(O1p, 0, level>=9, 0.85, COL.pos, COL.posBright, '+O2');
+  orbiter(O1p, Math.PI/2, level>=10, 0.85, COL.pos, COL.posBright, '+O3');
+  orbiter(O1n, Math.PI, level>=9, 0.7, COL.neg, COL.negBright, '-O2');
+  orbiter(O1n, Math.PI*1.5, level>=10, 0.7, COL.neg, COL.negBright, '-O3');
+
+  // Step12: mark fixed orbit-center amplitude band
+  if(level===12){
+    line(V(O1p-0.85,0,0),V(O1p+0.85,0,0), COL.posBright, 1, 0.3, [1,4]);
+    line(V(O1n-0.7,0,0),V(O1n+0.7,0,0), COL.negBright, 1, 0.3, [1,4]);
+  }
+
+  // Step14: full 3D free rotation — extra tumble applied via camera-independent object spin
+  if(level>=14){
+    extraZRot = (zSlider||0) + w*0.6;
+  }
+
+  flushQ();
+}
+
+// Step15: orbit trail accumulation -> two solid spheres emerging
+function sceneOrbitFill(t){
+  resetQ();
+  const w = t*0.0016*state.speed;
+  const fill = Math.min(1, (t%9000)/9000);
+  const O1p=1.55, O1n=-1.55;
+  line(V(O1n,0,0),V(O1p,0,0), COL.axis, 2, 0.5);
+
+  function cluster(center, radius, colr, seedBase){
+    const n = Math.floor(40+fill*260);
+    const pts = fibSphere(n, radius, center);
+    for(let i=0;i<pts.length;i++){
+      const jitter = 0.15*(1-fill);
+      const a = w*1.4+i;
+      const p = Vec3.add(pts[i], V(Math.sin(a+seedBase)*jitter, Math.cos(a*1.3+seedBase)*jitter, Math.sin(a*0.7+seedBase)*jitter));
+      dot(p, 2.6, colr, 0.35+0.5*fill);
+    }
+  }
+  cluster(V(O1p,0,0), 0.62, COL.pos, 0);
+  cluster(V(O1n,0,0), 0.55, COL.neg, 10);
+  dot(V(O1p,0,0), 4, COL.posBright, 0.9, true);
+  dot(V(O1n,0,0), 4, COL.negBright, 0.9, true);
+  hud([{text:'軌道の塗りつぶし '+Math.round(fill*100)+'%', color:COL.muted||'#9aa3c4'}]);
+  flushQ();
+}
+
+// Step16: first generation — two saturated spheres, Z-rotation slider
+function sceneFirstGeneration(t, zSlider){
+  resetQ();
+  extraZRot = zSlider||0;
+  const w = t*0.0009*state.speed;
+  const O1p=1.55, O1n=-1.55;
+
+  // reference axes
+  line(V(-2.3,0,0),V(2.3,0,0), COL.axis, 1.4, 0.4);
+  line(V(0,-1.6,0),V(0,1.6,0), COL.axis, 1.2, 0.25);
+  line(V(0,0,-1.6),V(0,0,1.6), COL.axis, 1.2, 0.25);
+
+  function sphere(center, radius, colr, colrBright, seed){
+    const n = 300;
+    const pts = fibSphere(n, radius, center);
+    for(let i=0;i<pts.length;i++){
+      const a = w*0.9+i*0.37+seed;
+      const flicker = 0.5+0.5*Math.sin(a*3.1);
+      dot(pts[i], 2.3+flicker*0.6, colr, 0.28+0.35*flicker);
+    }
+    dot(center, 5, colrBright, 0.95, true);
+  }
+  sphere(V(O1p,0,0), 0.68, COL.pos, COL.posBright, 0);
+  sphere(V(O1n,0,0), 0.6, COL.neg, COL.negBright, 50);
+  label(V(O1p,0,0), '+O1 系（第一世代）', COL.posBright, 12);
+  label(V(O1n,0,0), '-O1 系（第一世代）', COL.negBright, 12);
+  flushQ();
+}
+
+// Step17: triangular bipyramid + finger-web overlay
+function sceneBipyramid(t){
+  resetQ();
+  const w = t*0.0009*state.speed;
+  const O1p=1.55, O1n=-1.55;
+
+  function sphere(center, radius, colr, seed){
+    const pts = fibSphere(180, radius, center);
+    for(let i=0;i<pts.length;i++){
+      dot(pts[i], 2, colr, 0.22);
+    }
+  }
+  sphere(V(O1p,0,0), 0.68, COL.pos, 0);
+  sphere(V(O1n,0,0), 0.6, COL.neg, 10);
+
+  function bipyramid(center, r, colr){
+    const apex1 = Vec3.add(center, V(0,r*1.15,0));
+    const apex2 = Vec3.add(center, V(0,-r*1.15,0));
+    const tri=[];
+    for(let i=0;i<3;i++){
+      const a = w*0.6 + i*(Math.PI*2/3);
+      tri.push(Vec3.add(center, V(Math.cos(a)*r*0.95,0,Math.sin(a)*r*0.95)));
+    }
+    for(let i=0;i<3;i++){
+      line(apex1, tri[i], colr, 1.3, 0.7);
+      line(apex2, tri[i], colr, 1.3, 0.7);
+      line(tri[i], tri[(i+1)%3], colr, 1.3, 0.7);
+    }
+    dot(apex1, 3, colr, 0.9); dot(apex2, 3, colr, 0.9);
+  }
+  bipyramid(V(O1p,0,0), 0.68, COL.posBright);
+  bipyramid(V(O1n,0,0), 0.6, COL.negBright);
+
+  // finger-like web: lines from center to jittered sphere-surface points
+  function web(center, r, colr, seed){
+    const anchors = fibSphere(6, r, center);
+    for(let i=0;i<anchors.length;i++){
+      line(center, anchors[i], colr, 0.8, 0.28);
+    }
+  }
+  web(V(O1p,0,0), 0.68, COL.pos, 0);
+  web(V(O1n,0,0), 0.6, COL.neg, 10);
+  flushQ();
+}
+
+// Step18: 6 connecting lines between the two cores
+function sceneSixLines(t){
+  resetQ();
+  const w = t*0.0009*state.speed;
+  const O1p=1.55, O1n=-1.55;
+  function sphere(center, radius, colr){
+    const pts = fibSphere(160, radius, center);
+    for(let i=0;i<pts.length;i++) dot(pts[i], 1.9, colr, 0.2);
+  }
+  sphere(V(O1p,0,0), 0.68, COL.pos);
+  sphere(V(O1n,0,0), 0.6, COL.neg);
+  dot(V(O1p,0,0), 5, COL.posBright, 1, true);
+  dot(V(O1n,0,0), 5, COL.negBright, 1, true);
+  for(let i=0;i<3;i++){
+    const a = w*0.4 + i*(Math.PI*2/3);
+    const dir = V(Math.cos(a)*0.5, Math.sin(a)*0.5, Math.sin(a*1.3)*0.4);
+    const endP = Vec3.add(V(O1p,0,0), Vec3.add(V(0.9,0,0),dir));
+    const endN = Vec3.add(V(O1n,0,0), Vec3.add(V(-0.9,0,0),Vec3.scale(dir,-1)));
+    line(V(O1p,0,0), endP, COL.posBright, 1.6, 0.75);
+    line(V(O1n,0,0), endN, COL.negBright, 1.6, 0.75);
+    dot(endP, 2.6, COL.posBright, 0.8);
+    dot(endN, 2.6, COL.negBright, 0.8);
+  }
+  hud([{text:'結合線 6本', color:'#9aa3c4'}]);
+  flushQ();
+}
+
+// Step19: the contact point 0 — boundary, not substance
+function sceneContact(t){
+  resetQ();
+  const w = t*0.0012*state.speed;
+  const O1p=1.05, O1n=-1.05;
+  function sphere(center, radius, colr){
+    const pts = fibSphere(140, radius, center);
+    for(let i=0;i<pts.length;i++) dot(pts[i], 2.1, colr, 0.3);
+  }
+  sphere(V(O1p,0,0), 0.75, COL.pos);
+  sphere(V(O1n,0,0), 0.7, COL.neg);
+  const pulse = 0.5+0.5*Math.sin(w*2.4);
+  circle3(V(0,0,0), 0.16+0.03*pulse, 'x', COL.white, 1.6, 0.35+0.35*pulse);
+  circle3(V(0,0,0), 0.16+0.03*pulse, 'y', COL.white, 1.6, 0.35+0.35*pulse);
+  label(V(0,0.32,0), '0（実体なき接点）', COL.white, 12, 0.8);
+  flushQ();
+}
+
+// Step20-23: OOπO autonomous generations
+function scenePiGeneration(step, t){
+  resetQ();
+  const w = t*0.0011*state.speed;
+
+  function drawOOpiO(center, colr, colrBright, scale, seed){
+    scale = scale||1;
+    dot(center, 4.5*scale, colrBright, 0.95, true);
+    circle3(center, 0.32*scale, 'x', COL.pi, 1.2, 0.55);
+    const a = w*3+seed;
+    const pOrb = Vec3.add(center, V(Math.cos(a)*0.32*scale, 0, Math.sin(a)*0.32*scale));
+    dot(pOrb, 2.2*scale, COL.piBright, 0.9, true);
+    circle3(center, 0.5*scale, 'z', colr, 0.9, 0.25);
+  }
+
+  if(step===20){
+    const gap = 1.1;
+    drawOOpiO(V(-gap,0,0), COL.neg, COL.negBright, 1.15, 0);
+    drawOOpiO(V(gap,0,0), COL.pos, COL.posBright, 1.15, 40);
+    label(V(-gap,0.75,0), '-OOπO', COL.negBright, 12);
+    label(V(gap,0.75,0), '+OOπO', COL.posBright, 12);
+    line(V(-gap,0,0),V(gap,0,0), COL.white, 1, 0.15, [1,6]);
+  }
+
+  if(step===21){
+    const gap = 1.25;
+    drawOOpiO(V(-gap,0,0), COL.neg, COL.negBright, 1.05, 0);
+    drawOOpiO(V(gap,0,0), COL.pos, COL.posBright, 1.05, 40);
+    // shattering shell = light-speed wall breaking outward
+    const burst = (t%4000)/4000;
+    const n=70;
+    for(let i=0;i<n;i++){
+      const a = (i/n)*Math.PI*2;
+      const r = 0.9+burst*2.4;
+      const p = V(Math.cos(a)*r, Math.sin(a*1.7)*r*0.5, Math.sin(a)*r);
+      dot(p, 1.4, COL.white, Math.max(0,0.5-burst*0.5));
+    }
+    hud([{text:'光速の壁 破砕 '+Math.round(burst*100)+'%', color:'#9aa3c4'}]);
+  }
+
+  if(step===22){
+    const R=1.5;
+    const centers=[V(R,0,0),V(-R,0,0),V(0,R,0),V(0,-R,0),V(0,0,R),V(0,0,-R)];
+    for(let i=0;i<6;i++){
+      const c = centers[i];
+      const colr = i%2===0?COL.pos:COL.neg;
+      const colrB = i%2===0?COL.posBright:COL.negBright;
+      drawOOpiO(c, colr, colrB, 0.8, i*17);
+      line(V(0,0,0), c, COL.white, 1, 0.18);
+    }
+    dot(V(0,0,0), 6, COL.white, 1, true);
+    label(V(0,0.3,0), '高次接点', COL.white, 12, 0.85);
+    hud([{text:'第2世代：OOπO × 6', color:'#9aa3c4'}]);
+  }
+
+  if(step===23){
+    const R=1.7;
+    const hex=[V(R,0,0),V(-R,0,0),V(0,R,0),V(0,-R,0),V(0,0,R),V(0,0,-R)];
+    for(let h=0;h<6;h++){
+      const base = hex[h];
+      for(let k=0;k<3;k++){
+        const a = w*0.5 + k*(Math.PI*2/3) + h;
+        const off = V(Math.cos(a)*0.42, Math.sin(a)*0.42, Math.sin(a*1.3)*0.3);
+        const c = Vec3.add(base, off);
+        const colr = h%2===0?COL.pos:COL.neg;
+        const colrB = h%2===0?COL.posBright:COL.negBright;
+        drawOOpiO(c, colr, colrB, 0.42, h*9+k);
+        line(base, c, colr, 0.8, 0.3);
+      }
+    }
+    dot(V(0,0,0), 5, COL.white, 0.9, true);
+    hud([{text:'第3世代：OOπO × 18（光速励起 1→3 分裂）', color:'#9aa3c4'}]);
+  }
+  flushQ();
+}
+
+// Steps 24-26 / 30-31: grid lattice generations
+function sceneLattice(n, count, t, opts){
+  opts = opts||{};
+  resetQ();
+  const w = t*0.0009*state.speed;
+  const cell = opts.cell || (2.6/n);
+  const half = latticeCube(n, cell, COL.space, 0.30, 0.7);
+  const pts = latticeParticles(n, cell, Math.min(count, opts.cap||420), opts.seed||1);
+  for(let i=0;i<pts.length;i++){
+    const a = w*1.1+i;
+    const jitter = V(Math.sin(a)*cell*0.12, Math.cos(a*1.2)*cell*0.12, Math.sin(a*0.8)*cell*0.12);
+    const p = Vec3.add(pts[i], jitter);
+    const massified = opts.massify && (i % opts.massify === 0);
+    const colr = massified ? COL.mass : (i%3===0?COL.pi:(i%2===0?COL.pos:COL.neg));
+    dot(p, massified?3.4:2.1, colr, massified?0.95:0.5, massified);
+  }
+  hud([
+    {text: n+'×'+n+'×'+n+' = '+(n*n*n)+' マス', color:'#9aa3c4'},
+    {text: 'OOπO × '+count, color:'#c8b3f5'}
+  ]);
+  flushQ();
+  return half;
+}
+
+// Step27: dynamic equilibrium — 125 frozen vs 37 free
+function sceneEquilibrium(t){
+  resetQ();
+  const w = t*0.0012*state.speed;
+  const n=5, cell=2.6/5;
+  latticeCube(n, cell, COL.space, 0.30, 0.7);
+  const half = n*cell/2;
+  // 125 frozen points snap exactly to lattice nodes (5x5x5 = 125)
+  let idx=0;
+  for(let ix=0; ix<n; ix++) for(let iy=0; iy<n; iy++) for(let iz=0; iz<n; iz++){
+    const p = V(-half+cell*(ix+0.5), -half+cell*(iy+0.5), -half+cell*(iz+0.5));
+    dot(p, 1.9, COL.frozen, 0.55);
+    idx++;
+  }
+  // 37 free particles drift through the lattice
+  for(let i=0;i<37;i++){
+    const a = w*1.6+i*1.7;
+    const base = latticeParticles(n, cell, 37, 500)[i];
+    const p = Vec3.add(base, V(Math.sin(a)*cell*1.4, Math.cos(a*1.3)*cell*1.4, Math.sin(a*0.9)*cell*1.4));
+    dot(p, 3, COL.free, 0.9, true);
+  }
+  hud([
+    {text:'止（死）: 125 個 — 拘束エネルギーと均衡', color:'#8891a8'},
+    {text:'動（生）: 125 + 37 個 — 自由運動を継続', color:'#ffd9a0'}
+  ]);
+  flushQ();
+}
+
+// Step28: fused 225-element particle
+function sceneFused(t){
+  resetQ();
+  const w = t*0.0009*state.speed;
+  const R=1.15;
+  // outer fused shell (125 -> 1)
+  const shell = fibSphere(90, R, V(0,0,0));
+  for(let i=0;i<shell.length;i++) dot(shell[i], 2, COL.frozen, 0.28);
+  dot(V(0,0,0), 5.5, COL.white, 0.85, true);
+  // inner 37 OOπO (as O:111 + pi:38 visualized proportionally, capped for render)
+  const innerO = fibSphere(120, R*0.62, V(0,0,0));
+  for(let i=0;i<innerO.length;i++){
+    const a=w*1.3+i;
+    const p = Vec3.add(innerO[i], V(Math.sin(a)*0.03,Math.cos(a)*0.03,Math.sin(a*0.7)*0.03));
+    dot(p, 1.7, COL.pos, 0.55);
+  }
+  const innerPi = fibSphere(38, R*0.38, V(0,0,0));
+  for(let i=0;i<innerPi.length;i++){
+    const a=w*1.6+i*2;
+    const p = Vec3.add(innerPi[i], V(Math.sin(a)*0.05,Math.cos(a)*0.05,Math.sin(a*0.5)*0.05));
+    dot(p, 2, COL.pi, 0.75, true);
+  }
+  hud([
+    {text:'O 総数 187', color:'#ffe0ad'},
+    {text:'π 総数 38', color:'#ddc4ff'},
+    {text:'合計 225 要素（3×3×5×5）', color:'#e8e8f5'}
+  ]);
+  flushQ();
+}
+
+// Step29: 37 -> 1 + 36 mass conversion, dipole-center law
+function sceneMassConversion(t){
+  resetQ();
+  const w = t*0.0011*state.speed;
+  // forbidden zone at center: only O may sit there, never pi
+  dot(V(0,0,0), 6, COL.mass, 1, true);
+  label(V(0,0.4,0), '1（質量核・O）', COL.posBright, 12, 0.85);
+  circle3(V(0,0,0), 0.55, 'x', COL.white, 1, 0.25, [] );
+  const ring = fibSphere(36, 1.05, V(0,0,0));
+  for(let i=0;i<ring.length;i++){
+    const a = w*1.2+i;
+    const p = Vec3.add(ring[i], V(Math.sin(a)*0.06,Math.cos(a)*0.06,Math.sin(a*0.6)*0.06));
+    const isPi = i%3===2;
+    dot(p, isPi?2.1:1.9, isPi?COL.pi:COL.neg, isPi?0.75:0.5, isPi);
+    line(V(0,0,0), p, COL.axis, 0.6, 0.12);
+  }
+  hud([
+    {text:'37 → 1 + 36', color:'#e8e8f5'},
+    {text:'ポテンシャル総数 648（O 486 / π 162）', color:'#9aa3c4'},
+    {text:'双極中心の法則：中心に πは存在できない', color:'#c8b3f5'}
+  ]);
+  flushQ();
+}
+
+/* ============================================================
+   STEP TABLE
+============================================================ */
+const STEPS = [
+  { title:'Step 0: 完全なる無', phase:1,
+    desc:'何もない。境界も存在しない原初。空間も時間も、双極の場すら生まれていない、完全な無の状態。',
+    render:(t)=>sceneAxes(0,t) },
+  { title:'Step 1: 双極の場の分断', phase:1,
+    desc:'「在る」と「無し」の関係性が、双極の場として分断される。まだ点も線もないが、二つの性質の萌芽がここに現れる。',
+    render:(t)=>sceneAxes(1,t) },
+  { title:'Step 2: 直線の双極と円環宇宙論', phase:1,
+    desc:'点と線分、そして閉じた円環構造——この幾何学的基礎の上に、宇宙創世の力学プロセス全体が組み立てられていく。',
+    render:(t)=>sceneAxes(2,t) },
+  { title:'Step 3: 宇宙の始まり（双極 OO）', phase:1,
+    desc:'場が存在する領域と存在しない領域から、最初の双極 OO が誕生する。-OO と +OO、二つの性質がここで初めて分離する。',
+    render:(t)=>sceneAxes(3,t) },
+  { title:'Step 4: 線分の確立（+O1, 0, -O1）', phase:1,
+    desc:'-O1 と 原点 0 と +O1 の間に、直線軸「ーー」が架橋される。双極を結ぶ最初の直線的秩序の成立。',
+    render:(t)=>sceneAxes(4,t) },
+  { title:'Step 5: 直交極（+O2 / +O3）', phase:1,
+    desc:'主軸に直交して +O2 が、さらに直交して +O3 が誕生する。一次元の軸が、二次元・三次元へと自らを拡張し始める。',
+    render:(t)=>sceneAxes(5,t) },
+  { title:'Step 6: 負の直交双極（-O2 / -O3）', phase:1,
+    desc:'負極の -O1 側からも同様に -O2, -O3 が伸長する。正負両極において対称な直交構造が確立される。',
+    render:(t)=>sceneAxes(6,t) },
+  { title:'Step 7: 直線「ー」の伸張', phase:1,
+    desc:'三軸方向（親指・人差し指・中指の指先方向）へ、直線「ー」が外側へ伸張する。幾何学的骨格の完成。',
+    render:(t)=>sceneAxes(7,t) },
+
+  { title:'Step 8: 運動の開始（軸拘束と O1 の引き合い）', phase:2,
+    desc:'軸は固定され、0 点で分断されたまま +O1 と -O1 が相互に引き合う運動を開始する。静的な幾何学が、初めて動力学へ移行する瞬間。',
+    render:(t)=>scenePoles(8,t,0) },
+  { title:'Step 9: O2 の円運動', phase:2,
+    desc:'回転中心を O1 の位置とし、-O1 に反発され +O1 に引かれながら O2 が回転運動を始める。直線的な引力が円運動へと転化する。',
+    render:(t)=>scenePoles(9,t,0) },
+  { title:'Step 10: O3 の周回連動', phase:2,
+    desc:'O3 も O1 を中心として連動し、立体的な幾何学回転場が確立される。二つの直交極が同期して周回する。',
+    render:(t)=>scenePoles(10,t,0) },
+  { title:'Step 11: O1 の単振動運動', phase:2,
+    desc:'O1 が軸上で強固に単振動（往復共振）を行い、全体系の駆動源となる。すべての回転運動の起点となる鼓動。',
+    render:(t)=>scenePoles(11,t,0) },
+  { title:'Step 12: -O2 回転中心の決定', phase:2,
+    desc:'+O2 と -O2 の回転中心が、軸線上の特定の振幅区間として確定する。運動が無秩序ではなく、決まった範囲に収束し始める。',
+    render:(t)=>scenePoles(12,t,0) },
+  { title:'Step 13: 二重軸回転', phase:2,
+    desc:'軸線「ーー」自体が、それぞれの中心で自回転を始める。回転する軸の上でさらに回転が重なる、二重の自転構造。',
+    render:(t)=>scenePoles(13,t,0) },
+  { title:'Step 14: 3次元自由回転の成立', phase:2,
+    desc:'平面拘束が解除され、原点 0・軸線・振動・周回が組み合わさった全方位3次元自由回転場が成立する。',
+    render:(t)=>scenePoles(14,t,0) },
+  { title:'Step 15: 軌道の塗りつぶし（双極球体）', phase:2,
+    desc:'高密度な運動軌道が充満し、原点 0 を挟んで2つの実体球が形成される。軌跡そのものが実体へと転化していく過程。',
+    render:(t)=>sceneOrbitFill(t) },
+  { title:'Step 16: 第一世代の誕生（The First Generation）', phase:2,
+    desc:'エネルギーが飽和した2つの球体（第一世代）が誕生する。下の「Z軸回転」スライダーで原点 0 を中心に回転させ、多角的に構造を検証できる。',
+    render:(t,z)=>sceneFirstGeneration(t,z), hasZSlider:true },
+  { title:'Step 17: 三角双錘と構造網', phase:2,
+    desc:'内部に正・負球を抱え、三角双錘（Triangular Bipyramid）と手指状の結合網で覆われる。球体の表面に幾何学的秩序が刻まれていく。',
+    render:(t)=>sceneBipyramid(t) },
+  { title:'Step 18: 6本線と指先結合', phase:2,
+    desc:'2つの球の中心核（付け根）から、計6本の結合線が外部へ伸びる。次の構造変化への準備が整う。',
+    render:(t)=>sceneSixLines(t) },
+
+  { title:'Step 19: 0（双極の接点）の性質', phase:3,
+    desc:'中心 0 に実体としての点は存在せず、単に接している境界として定義される。「在る」のではなく「接している」だけの、特異な虚の点。',
+    render:(t)=>sceneContact(t) },
+  { title:'Step 20: 接点の消滅と -OOπO / +OOπO の誕生', phase:3,
+    desc:'虚上の接点 0 が消滅し、独自周回系 π を抱えた自律構造 -OOπO（負）と +OOπO（正）へ昇華する。もはや互いに接してすらいない、独立した存在への転換。',
+    render:(t)=>scenePiGeneration(20,t) },
+  { title:'Step 21: 光速の壁の穿孔とエネルギーなき OOπO の出現', phase:3,
+    desc:'閉じ込められていた光速の壁が破れ、干渉を受けない純粋幾何学空間「エネルギーのない OOπO」が現出する。',
+    render:(t)=>scenePiGeneration(21,t) },
+  { title:'Step 22: 6つの OOπO と高次接点の創成', phase:3,
+    desc:'調和配置により6つの OOπO（第2世代）が誕生し、中央に新たな高次接点（創成核）が結ばれる。',
+    render:(t)=>scenePiGeneration(22,t) },
+  { title:'Step 23: 光速励起と第3世代（18の OOπO）の誕生', phase:3,
+    desc:'第2世代の6つの各拠点が光速まで励起して分裂（1→3）し、18個の OOπO（第3世代）が誕生する。',
+    render:(t)=>scenePiGeneration(23,t) },
+
+  { title:'Step 24: 3×3×3 の27正方形グリッド壁', phase:4,
+    desc:'第3世代は XYZ の直線的軌道壁（3×3×3 = 27 の正方形格子）によって拘束される。空間そのものが格子状に区切られ始める。',
+    render:(t)=>sceneLattice(3,18,t,{seed:11}) },
+  { title:'Step 25: 第4世代（4×4×4 格子と54個の OOπO）', phase:4,
+    desc:'4×4×4（64マス）へと空間が広がり、18+18+18 = 54 個の OOπO が3層位相に充満する。',
+    render:(t)=>sceneLattice(4,54,t,{seed:22}) },
+  { title:'Step 26: 第5世代と等価束縛', phase:4,
+    desc:'5×5×5 = 125 マスの中に 54×3 = 162 個の OOπO が誕生。「1マスの1辺 = OOπO の直径」として、ぴったり内接する。',
+    render:(t)=>sceneLattice(5,162,t,{seed:33,cap:260}) },
+  { title:'Step 27: 動（生）と止（死）の力学平衡', phase:4,
+    desc:'162 − 125 = 37 個が溢れ出る。止（死・消滅）：125 個の O が 125 マスの拘束エネルギーと釣り合って動けなくなる。動（生・存在）：残された 125 個の OπO と 37 個の OOπO が空間で自由運動を継続する。',
+    render:(t)=>sceneEquilibrium(t) },
+
+  { title:'Step 28: 225要素の粒子創成', phase:5,
+    desc:'125 の拘束 O が1つに融合した球の中に、37 個の OOπO と OπO（38個）が一体化。O の総数：37×3 + 2×38 = 187。π の総数：38。合計要素：187 + 38 = 225 要素（3×3×5×5 の調和粒子）。',
+    render:(t)=>sceneFused(t) },
+  { title:'Step 29: 37の質量変換と絶対定理', phase:5,
+    desc:'37 の OOπO は 1 の OOπO と 36 の OOπO に分解。ポテンシャル総数 162×4 = 648（486 の O と 162 の π）。双極中心の法則：止まると消滅する π は構造中心に存在できず、O のみが中心に存在可能。125 の空間の中で 37 個分のエネルギーが「質量」へ変換され、この物理空間が完結・成立する。',
+    render:(t)=>sceneMassConversion(t) },
+  { title:'Step 30: 第6世代（6×6×6 / 486個 / 質量化1〜2個）', phase:5,
+    desc:'6×6×6 = 216 マスに 162×3 = 486 個が存在。O の内部に OπO と同サイズの質量化要素が1〜2個結合し始める。',
+    render:(t)=>sceneLattice(6,486,t,{seed:44,cap:320,massify:9}) },
+  { title:'Step 31: 第7世代と物質の創成（原子・素粒子の定着）', phase:5,
+    desc:'7×7×7 = 343 マスの中に 1458 個が存在。O の内部に OπO と質量化要素が1〜3個結合。この組み合わせの幾何学多調和（量子軌道モデル）により、現実世界の「素粒子」や「原子」が結実・固定化された。',
+    render:(t)=>sceneLattice(7,1458,t,{seed:55,cap:420,massify:6}) },
+];
+
+/* ============================================================
+   UI wiring
+============================================================ */
+const elTitle = document.getElementById('stepTitle');
+const elDesc = document.getElementById('stepDesc');
+const elNum = document.getElementById('stepNum');
+const elSelect = document.getElementById('stepSelect');
+const elPrev = document.getElementById('btnPrev');
+const elNext = document.getElementById('btnNext');
+const elSpeed = document.getElementById('speedSlider');
+const elSpeedVal = document.getElementById('speedVal');
+const elRotCtrl = document.getElementById('rotCtrl');
+const elRot = document.getElementById('rotSlider');
+const elRotVal = document.getElementById('rotVal');
+const elPhaseBadge = document.getElementById('phaseBadge');
+const elPhaseTrack = document.getElementById('phaseTrack');
+const elPhaseLabel = document.getElementById('phaseLabel');
+const elDragHint = document.getElementById('dragHint');
+
+const PHASE_NAMES = {
+  1:'Phase 1 — 幾何学の萌芽と軸線の確立',
+  2:'Phase 2 — 動的平衡宇宙と第一世代の誕生',
+  3:'Phase 3 — 接点の消滅と世代交替',
+  4:'Phase 4 — 空間格子の自己拡張と動静の原理',
+  5:'Phase 5 — 質量変換と物質・原子の創成'
+};
+
+(function buildSelect(){
+  let curPhase=0, group=null;
+  STEPS.forEach((s,i)=>{
+    if(s.phase!==curPhase){
+      curPhase=s.phase;
+      group = document.createElement('optgroup');
+      group.label = PHASE_NAMES[curPhase];
+      elSelect.appendChild(group);
+    }
+    const opt = document.createElement('option');
+    opt.value=i;
+    opt.textContent = 'Step '+i+' — '+s.title.replace(/^Step \d+:\s*/,'');
+    group.appendChild(opt);
+  });
+})();
+
+(function buildPhaseTrack(){
+  elPhaseTrack.innerHTML='';
+  for(let p=1;p<=5;p++){
+    const seg = document.createElement('div');
+    seg.className='seg';
+    seg.dataset.phase=p;
+    elPhaseTrack.appendChild(seg);
+  }
+})();
+
+function goto(i){
+  i = Math.max(0, Math.min(STEPS.length-1, i));
+  state.step = i;
+  state.t = 0;
+  const s = STEPS[i];
+  elTitle.textContent = s.title;
+  elDesc.textContent = s.desc;
+  elNum.textContent = i;
+  elSelect.value = i;
+  elPrev.disabled = i===0;
+  elNext.disabled = i===STEPS.length-1;
+  elPhaseBadge.textContent = PHASE_NAMES[s.phase];
+  elPhaseLabel.textContent = PHASE_NAMES[s.phase];
+  elDragHint.style.display = i<=2 ? 'none' : 'block';
+
+  const segs = elPhaseTrack.querySelectorAll('.seg');
+  segs.forEach(seg=>{
+    const p = parseInt(seg.dataset.phase,10);
+    seg.classList.toggle('current', p===s.phase);
+    seg.classList.toggle('done', p<s.phase);
+  });
+
+  elRotCtrl.style.display = s.hasZSlider ? 'block' : 'none';
+  if(s.hasZSlider){ elRot.value = 0; elRotVal.textContent='0°'; }
+  camera.auto = true;
+}
+
+elPrev.addEventListener('click', ()=>goto(state.step-1));
+elNext.addEventListener('click', ()=>goto(state.step+1));
+elSelect.addEventListener('change', ()=>goto(parseInt(elSelect.value,10)));
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowRight'){ goto(state.step+1); }
+  else if(e.key==='ArrowLeft'){ goto(state.step-1); }
+});
+elSpeed.addEventListener('input', ()=>{
+  state.speed = parseFloat(elSpeed.value);
+  elSpeedVal.textContent = state.speed.toFixed(2)+'x';
+});
+elRot.addEventListener('input', ()=>{
+  const deg = parseFloat(elRot.value);
+  elRotVal.textContent = Math.round(deg)+'°';
+});
+
+/* ============================================================
+   Main loop
+============================================================ */
+function frame(ts){
+  if(!state.lastTs) state.lastTs = ts;
+  const dt = Math.min(48, ts-state.lastTs);
+  state.lastTs = ts;
+  state.t += dt*state.speed;
+  if(camera.auto) camera.ay += camera.vx*0.006*dt*0.06;
+
+  BASE = Math.min(W,H)*0.155;
+  drawBackground(state.t);
+
+  const s = STEPS[state.step];
+  const zRad = s.hasZSlider ? (parseFloat(elRot.value)*Math.PI/180) : 0;
+  extraZRot = 0;
+  try{
+    s.render(state.t, zRad);
+  }catch(err){
+    console.error('render error at step', state.step, err);
+  }
+  requestAnimationFrame(frame);
+}
+
+resize();
+goto(0);
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
